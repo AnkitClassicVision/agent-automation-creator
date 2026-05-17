@@ -1,0 +1,41 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Generated AgentTwin reports — keep examples committed, exclude user runs
+agenttwin-*-*.html
+!examples/example-*.html
+
+# Logs
+*.log
+
+# Secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Internal drafts
+drafts/
+internal/
+
+# Deploy instructions — Hermes-only, never committed to public repo
+HERMES_DEPLOY.md
+deploy/

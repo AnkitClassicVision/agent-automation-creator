@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentTwin Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2; --paper: #FFFFFF; --ink: #1A1B1F; --ink-soft: #2A2D33;
+    --muted: #6B6D73; --muted-2: #A8A9AE; --line: #E8E5DE; --line-soft: #F0EEE8;
+    --brand: #0F766E; --brand-soft: #CCFBF1; --brand-ink: #134E4A;
+    --success: #15803D; --success-soft: #DCFCE7; --success-ink: #14532D;
+    --warning: #B45309; --warning-soft: #FEF3C7; --warning-ink: #7C2D12;
+    --danger: #BE123C; --danger-soft: #FEE2E2; --danger-ink: #831843;
+    --type-d: #0369A1; --type-d-soft: #E0F2FE;
+    --type-c: #A16207; --type-c-soft: #FEF9C3;
+    --type-a: #7E22CE; --type-a-soft: #F3E8FF;
+    --type-h: #475569; --type-h-soft: #F1F5F9;
+    --lane-system: #0F766E; --lane-system-soft: #CCFBF1;
+    --lane-ai: #A16207; --lane-ai-soft: #FEF9C3;
+    --lane-human: #475569; --lane-human-soft: #F1F5F9;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--cream); color: var(--ink); font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.55; font-size: 15px; scroll-behavior: smooth; }
+  body { padding: 16px; max-width: 720px; margin: 0 auto; padding-bottom: 80px; }
+  .serif { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -0.015em; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px 18px; }
+  .wordmark { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+  .wordmark span { color: var(--brand); font-style: italic; }
+  .version-pill { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; border: 1px solid var(--line); padding: 4px 8px; border-radius: 100px; background: var(--paper); }
+  .view-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 24px; position: sticky; top: 8px; z-index: 10; }
+  .view-tab { border: none; background: transparent; padding: 11px 16px; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+  .view-tab.active { background: var(--ink); color: var(--paper); }
+  .headline { padding: 4px 4px 24px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
+  h1 { font-family: 'Fraunces', serif; font-size: 38px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.05; color: var(--ink); }
+  h1 .accent { color: var(--brand); font-style: italic; font-weight: 500; }
+  .subhead { color: var(--muted); font-size: 15px; margin-top: 12px; max-width: 540px; }
+  .toggle-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 100px; padding: 4px; display: inline-flex; margin: 8px 4px 20px; }
+  .toggle-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 100px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .2s; }
+  .toggle-btn.active { background: var(--ink); color: var(--paper); }
+  .toggle-btn.active.after-active { background: var(--success); }
+  .grade-card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 32px 28px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .grade-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(180, 83, 9, 0.04), transparent 60%); pointer-events: none; }
+  .grade-card.is-after::before { background: radial-gradient(circle at top right, rgba(21, 128, 61, 0.06), transparent 60%); }
+  .grade-card-inner { position: relative; }
+  .agent-meta { font-size: 12px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .agent-name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 24px; }
+  .grade-row { display: flex; align-items: center; gap: 24px; }
+  .grade-circle { width: 110px; height: 110px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; background: var(--warning-soft); border: 2px solid var(--warning); }
+  .grade-circle.is-pass { background: var(--success-soft); border-color: var(--success); }
+  .grade-circle.is-fail { background: var(--danger-soft); border-color: var(--danger); }
+  .grade-letter { font-family: 'Fraunces', serif; font-size: 48px; font-weight: 700; letter-spacing: -0.04em; color: var(--warning-ink); line-height: 1; }
+  .grade-circle.is-pass .grade-letter { color: var(--success-ink); }
+  .grade-circle.is-fail .grade-letter { color: var(--danger-ink); }
+  .grade-label { font-size: 9px; letter-spacing: 0.18em; color: var(--warning-ink); text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+  .grade-circle.is-pass .grade-label { color: var(--success-ink); }
+  .grade-circle.is-fail .grade-label { color: var(--danger-ink); }
+  .verdict-text { flex: 1; }
+  .verdict-headline { font-family: 'Fraunces', serif; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; }
+  .verdict-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .verdict-counts { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .count-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+  .count-pill.healthy { background: var(--success-soft); color: var(--success-ink); }
+  .count-pill.needs-work { background: var(--warning-soft); color: var(--warning-ink); }
+  .count-pill.broken { background: var(--danger-soft); color: var(--danger-ink); }
+  .count-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .count-pill.healthy .count-dot { background: var(--success); }
+  .count-pill.needs-work .count-dot { background: var(--warning); }
+  .count-pill.broken .count-dot { background: var(--danger); }
+  .section-heading { padding: 32px 4px 18px; }
+  .section-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .section-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .prop-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px; margin-bottom: 12px; transition: all .25s; }
+  .prop-card.status-healthy { border-color: var(--success); border-width: 1.5px; }
+  .prop-card.status-needs-work { border-color: var(--warning); border-width: 1.5px; }
+  .prop-card.status-broken { border-color: var(--danger); border-width: 1.5px; background: linear-gradient(to bottom right, var(--paper) 60%, var(--danger-soft) 220%); }
+  .prop-card-top { display: flex; gap: 14px; align-items: flex-start; }
+  .icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .prop-card.status-healthy .icon-wrap { background: var(--success-soft); }
+  .prop-card.status-needs-work .icon-wrap { background: var(--warning-soft); }
+  .prop-card.status-broken .icon-wrap { background: var(--danger-soft); }
+  .icon-wrap svg { width: 24px; height: 24px; }
+  .prop-content { flex: 1; min-width: 0; }
+  .prop-card-titles { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .prop-title { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+  .prop-formal { font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-top: 3px; font-weight: 600; }
+  .status-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; padding: 5px 10px; border-radius: 100px; flex-shrink: 0; white-space: nowrap; }
+  .status-badge.healthy { background: var(--success-soft); color: var(--success-ink); }
+  .status-badge.needs-work { background: var(--warning-soft); color: var(--warning-ink); }
+  .status-badge.broken { background: var(--danger-soft); color: var(--danger-ink); }
+  .prop-description { font-size: 14px; color: var(--ink-soft); margin-top: 12px; line-height: 1.55; }
+  .prop-detail-row { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+  .prop-detail-item { font-size: 13px; color: var(--muted); display: grid; grid-template-columns: 56px 1fr; gap: 10px; }
+  .prop-detail-label { font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding-top: 2px; }
+  .prop-card.status-healthy .prop-detail-label { color: var(--success-ink); }
+  .prop-card.status-needs-work .prop-detail-label { color: var(--warning-ink); }
+  .prop-card.status-broken .prop-detail-label { color: var(--danger-ink); }
+  .prop-detail-body { color: var(--ink-soft); }
+  .compare-card { background: var(--ink); color: var(--cream); border-radius: 20px; padding: 26px 22px; margin: 16px 0; }
+  .compare-eyebrow { font-size: 10px; letter-spacing: 0.2em; color: var(--brand-soft); text-transform: uppercase; font-weight: 600; }
+  .compare-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; margin-top: 6px; letter-spacing: -0.015em; }
+  .compare-row { display: grid; grid-template-columns: 56px 1fr; gap: 14px; margin-top: 20px; align-items: center; }
+  .compare-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--muted-2); }
+  .compare-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .compare-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+  .compare-dot.healthy { background: var(--success); }
+  .compare-dot.needs-work { background: var(--warning); }
+  .compare-dot.broken { background: var(--danger); }
+  .compare-dot.healthy::after { content: '✓'; }
+  .compare-dot.needs-work::after { content: '!'; }
+  .compare-dot.broken::after { content: '✗'; }
+  .compare-row.after-row .compare-label { color: var(--brand-soft); }
+  .action-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; margin-top: 16px; }
+  .action-eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .action-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-top: 6px; letter-spacing: -0.015em; }
+  .action-sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .action-list { list-style: none; margin-top: 18px; }
+  .action-item { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .action-item:last-child { border-bottom: none; }
+  .action-num { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--brand); line-height: 1; padding-top: 2px; }
+  .action-text { font-size: 14px; color: var(--ink); line-height: 1.5; }
+  .action-text .who { color: var(--muted); font-size: 12px; margin-top: 4px; display: block; }
+  .map-overview { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 18px; margin-bottom: 22px; }
+  .map-overview-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .map-overview-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; }
+  .map-overview-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .map-legends { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--line-soft); border-radius: 10px; margin-bottom: 14px; }
+  .map-legend-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; font-weight: 600; align-items: center; }
+  .map-legend-row .label { color: var(--ink-soft); font-weight: 700; margin-right: 4px; }
+  .map-legend-item { display: flex; align-items: center; gap: 5px; }
+  .map-legend-tag { padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+  .map-legend-tag.d { background: var(--type-d-soft); color: var(--type-d); }
+  .map-legend-tag.c { background: var(--type-c-soft); color: var(--type-c); }
+  .map-legend-tag.a { background: var(--type-a-soft); color: var(--type-a); }
+  .map-legend-tag.h { background: var(--type-h-soft); color: var(--type-h); }
+  .lane-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .lane-swatch.system { background: var(--lane-system); }
+  .lane-swatch.ai { background: var(--lane-ai); }
+  .lane-swatch.human { background: var(--lane-human); }
+  .map-flow { display: flex; flex-direction: column; gap: 0; }
+  .map-node { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .15s; display: grid; grid-template-columns: 24px 1fr auto auto auto; gap: 8px; align-items: center; }
+  .map-node:hover { transform: translateY(-1px); border-color: var(--muted-2); }
+  .map-node.healthy { border-color: var(--success); background: linear-gradient(to right, var(--success-soft) 0%, var(--paper) 35%); }
+  .map-node.needs-work { border-color: var(--warning); background: linear-gradient(to right, var(--warning-soft) 0%, var(--paper) 35%); }
+  .map-node.broken { border-color: var(--danger); background: linear-gradient(to right, var(--danger-soft) 0%, var(--paper) 35%); }
+  .map-node-num { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .map-node-name { font-weight: 600; font-size: 13px; letter-spacing: -0.005em; }
+  .type-pill { font-size: 9px; font-weight: 700; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.04em; }
+  .type-pill.d { background: var(--type-d-soft); color: var(--type-d); }
+  .type-pill.c { background: var(--type-c-soft); color: var(--type-c); }
+  .type-pill.a { background: var(--type-a-soft); color: var(--type-a); }
+  .type-pill.h { background: var(--type-h-soft); color: var(--type-h); }
+  .lane-pill { font-size: 9px; font-weight: 700; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.04em; }
+  .lane-pill.system { background: var(--lane-system-soft); color: var(--lane-system); }
+  .lane-pill.ai { background: var(--lane-ai-soft); color: var(--lane-ai); }
+  .lane-pill.human { background: var(--lane-human-soft); color: var(--lane-human); }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .status-dot.healthy { background: var(--success); }
+  .status-dot.needs-work { background: var(--warning); }
+  .status-dot.broken { background: var(--danger); }
+  .map-edge { display: flex; flex-direction: column; align-items: center; padding: 4px 0; cursor: pointer; }
+  .map-edge-line { width: 2px; height: 12px; background: var(--muted-2); }
+  .map-edge-line.healthy { background: var(--success); }
+  .map-edge-line.needs-work { background: var(--warning); }
+  .map-edge-line.broken { background: var(--danger); }
+  .map-edge-label { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; font-weight: 600; padding: 1px 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 100px; margin: 2px 0; }
+  .branch-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0 8px; padding: 0 4px; }
+  .branch-divider .line { flex: 1; height: 1px; background: var(--line); }
+  .branch-divider .label { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+  .recs-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px 22px; margin-bottom: 22px; }
+  .recs-eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .recs-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-top: 4px; letter-spacing: -0.015em; }
+  .recs-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .recs-list { list-style: none; margin-top: 18px; display: grid; gap: 0; }
+  .rec-item { display: grid; grid-template-columns: 84px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); align-items: flex-start; }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-priority { font-size: 9px; font-weight: 700; letter-spacing: 0.13em; padding: 4px 8px; border-radius: 100px; text-transform: uppercase; text-align: center; justify-self: start; white-space: nowrap; }
+  .rec-priority.critical { background: var(--danger-soft); color: var(--danger-ink); }
+  .rec-priority.high { background: var(--warning-soft); color: var(--warning-ink); }
+  .rec-priority.medium { background: var(--brand-soft); color: var(--brand-ink); }
+  .rec-priority.opt { background: var(--line-soft); color: var(--muted); }
+  .rec-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .rec-meta { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .rec-link { color: var(--brand); text-decoration: none; font-weight: 600; cursor: pointer; }
+  .rec-link:hover { text-decoration: underline; }
+  .rec-impact { font-size: 13px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
+  .rec-impact::before { content: '→ '; color: var(--brand); font-weight: 700; }
+  .cross-card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px; margin-bottom: 12px; position: relative; }
+  .cross-card::before { content: ''; position: absolute; top: 0; left: 24px; right: 24px; height: 3px; background: var(--brand); border-radius: 0 0 3px 3px; }
+  .cross-eyebrow { font-size: 10px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .cross-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; margin-top: 4px; }
+  .cross-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .cross-content { margin-top: 14px; }
+  .state-flow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+  .state-chip { font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 100px; background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); white-space: nowrap; }
+  .state-chip.terminal { background: var(--success-soft); color: var(--success-ink); border-color: var(--success); }
+  .state-chip.error { background: var(--danger-soft); color: var(--danger-ink); border-color: var(--danger); }
+  .state-arrow { color: var(--muted-2); font-size: 12px; font-weight: 700; }
+  .detail-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px; margin-bottom: 12px; scroll-margin-top: 80px; }
+  .detail-card.healthy { border-left: 4px solid var(--success); }
+  .detail-card.needs-work { border-left: 4px solid var(--warning); }
+  .detail-card.broken { border-left: 4px solid var(--danger); }
+  .detail-card-top { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: flex-start; }
+  .detail-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; line-height: 1; padding-top: 2px; }
+  .detail-card.healthy .detail-num { color: var(--success-ink); }
+  .detail-card.needs-work .detail-num { color: var(--warning-ink); }
+  .detail-card.broken .detail-num { color: var(--danger-ink); }
+  .detail-name { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; }
+  .detail-meta-line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+  .detail-plain { font-size: 14px; color: var(--ink-soft); margin-top: 14px; line-height: 1.55; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .detail-plain-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block; }
+  .io-block { margin-top: 14px; padding: 12px 14px; background: var(--line-soft); border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .io-col { font-size: 12px; }
+  .io-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .io-val { color: var(--ink-soft); font-weight: 500; }
+  .detail-table { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+  .detail-table-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+  .detail-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; font-size: 13px; }
+  .detail-row-label { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; }
+  .detail-row-val { color: var(--ink-soft); }
+  .quality-row { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .quality-row-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .quality-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .quality-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .quality-chip.pass { background: var(--success-soft); color: var(--success-ink); }
+  .quality-chip.fail { background: var(--danger-soft); color: var(--danger-ink); }
+  .quality-chip.na { background: var(--line-soft); color: var(--muted); }
+  .quality-chip-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .quality-chip.pass .quality-chip-dot { background: var(--success); }
+  .quality-chip.fail .quality-chip-dot { background: var(--danger); }
+  .quality-chip.na .quality-chip-dot { background: var(--muted-2); }
+  .fix-block { margin-top: 14px; padding: 12px 14px; background: var(--warning-soft); border-radius: 12px; }
+  .fix-block.broken { background: var(--danger-soft); }
+  .fix-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; color: var(--warning-ink); }
+  .fix-block.broken .fix-eyebrow { color: var(--danger-ink); }
+  .fix-text { font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+  .model-block { margin-top: 14px; padding: 14px; background: var(--type-c-soft); border-radius: 12px; border-left: 3px solid var(--type-c); }
+  .model-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--type-c); }
+  .model-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .model-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+  .prompts-section { margin-top: 14px; padding: 14px; background: var(--type-c-soft); border-radius: 12px; border-left: 3px solid var(--type-c); }
+  .prompts-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; color: var(--type-c); }
+  .prompts-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 10px; }
+  .prompt-details { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+  .prompt-details:last-child { margin-bottom: 0; }
+  .prompt-summary { padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; list-style: none; gap: 8px; }
+  .prompt-summary::-webkit-details-marker { display: none; }
+  .prompt-summary:hover { background: var(--line-soft); }
+  .prompt-summary-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .prompt-summary-name::before { content: '▸'; color: var(--muted-2); transition: transform .15s; display: inline-block; font-size: 10px; }
+  .prompt-details[open] .prompt-summary-name::before { transform: rotate(90deg); }
+  .prompt-summary-meta { font-size: 10px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .prompt-content { padding: 14px; border-top: 1px solid var(--line); background: #FCFAF5; font-family: var(--mono); font-size: 11.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--ink-soft); max-height: 380px; overflow-y: auto; }
+  .candidacy-block { margin-top: 12px; padding: 12px 14px; background: var(--brand-soft); border-radius: 10px; border-left: 3px solid var(--brand); }
+  .candidacy-block.judgment { background: var(--type-h-soft); border-left-color: var(--type-h); }
+  .candidacy-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--brand-ink); }
+  .candidacy-block.judgment .candidacy-eyebrow { color: var(--type-h); }
+  .candidacy-status { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .candidacy-meter { height: 6px; background: rgba(15, 118, 110, 0.15); border-radius: 100px; margin: 8px 0 6px; overflow: hidden; position: relative; }
+  .candidacy-block.judgment .candidacy-meter { background: rgba(71, 85, 105, 0.15); }
+  .candidacy-meter-fill { height: 100%; background: var(--brand); border-radius: 100px; transition: width .3s; }
+  .candidacy-block.judgment .candidacy-meter-fill { background: var(--type-h); }
+  .candidacy-meter-fill.over { background: var(--success); }
+  .candidacy-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .candidacy-recommendation { font-size: 12px; color: var(--ink-soft); margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(15, 118, 110, 0.25); }
+  .candidacy-block.judgment .candidacy-recommendation { border-top-color: rgba(71, 85, 105, 0.25); }
+  .candidacy-recommendation::before { content: '→ '; color: var(--brand); font-weight: 700; }
+  .candidacy-block.judgment .candidacy-recommendation::before { color: var(--type-h); }
+  .judgment-block { margin-top: 14px; padding: 14px; background: var(--type-h-soft); border-radius: 12px; border-left: 3px solid var(--type-h); }
+  .judgment-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--type-h); }
+  .judgment-question { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); font-style: italic; }
+  .judgment-meta { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+  .edge-card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px; margin-bottom: 10px; scroll-margin-top: 80px; border-left: 3px solid var(--muted-2); }
+  .edge-card.healthy { border-left-color: var(--success); }
+  .edge-card.needs-work { border-left-color: var(--warning); }
+  .edge-card.broken { border-left-color: var(--danger); }
+  .edge-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+  .edge-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .edge-name .arrow { color: var(--muted-2); margin: 0 4px; }
+  .edge-plain { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .footer { text-align: center; color: var(--muted-2); font-size: 11px; letter-spacing: 0.12em; margin-top: 36px; text-transform: uppercase; padding-bottom: 32px; }
+  .footer-brand { font-family: 'Fraunces', serif; text-transform: none; font-style: italic; letter-spacing: 0; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .view-hidden { display: none; }
+  @media (min-width: 600px) { body { padding: 32px 28px 80px; } h1 { font-size: 48px; } .grade-circle { width: 130px; height: 130px; } .grade-letter { font-size: 56px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wordmark">Agent<span>Twin</span></div>
+  <div class="version-pill" id="version-pill">v1 · Report</div>
+</div>
+
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-summary">Summary</button>
+  <button class="view-tab" id="tab-map">Process Map</button>
+</div>
+
+<div id="view-summary">
+  <div class="headline">
+    <div class="eyebrow">AI Agent Health Check</div>
+    <h1>Is your AI agent <span class="accent">ready</span> for production?</h1>
+    <div class="subhead">Every AI agent needs 5 things to work safely. We check all 5. Here's what we found.</div>
+  </div>
+  <div class="toggle-wrap"><button class="toggle-btn active" id="btn-before">Right now</button><button class="toggle-btn after-active" id="btn-after">After the fix</button></div>
+  <div id="grade-card-container"></div>
+  <div class="section-heading"><div class="section-title serif">The 5 things every AI agent needs</div><div class="section-sub">In plain English. With the actual fix if it's broken.</div></div>
+  <div id="props-wrap"></div>
+  <div id="compare-container"></div>
+  <div id="action-plan-container"></div>
+</div>
+
+<div id="view-map" class="view-hidden">
+  <div class="headline">
+    <div class="eyebrow">Process Map</div>
+    <h1>Every step. Every <span class="accent">connection</span>. Mapped.</h1>
+    <div class="subhead">Tap any step in the map to jump to its detail card.</div>
+  </div>
+  <div id="map-overview-container"></div>
+  <div id="recommendations-container"></div>
+  <div class="section-heading"><div class="section-title serif">Cross-cutting</div><div class="section-sub">Things that span the whole flow: memory, state, governance.</div></div>
+  <div id="cross-cutting-container"></div>
+  <div class="section-heading"><div class="section-title serif">Steps · <span id="node-count">0</span> nodes</div><div class="section-sub">Each step has inputs, outputs, specs, quality, and (where it applies) model identity, prompts, or human-judgment details.</div></div>
+  <div id="nodes-detail-container"></div>
+  <div class="section-heading"><div class="section-title serif">Connections · <span id="edge-count">0</span> edges</div><div class="section-sub">How work moves between steps.</div></div>
+  <div id="edges-detail-container"></div>
+</div>
+
+<div class="footer">
+  <div class="footer-brand">Built on the AAC v1.1 framework</div>
+  <span id="footer-tag">AgentTwin · Report</span>
+</div>
+
+<!-- ═══════════════════════ AGENT DATA ═══════════════════════
+     This is the ONLY block the AgentTwin skill modifies per run.
+     Replace contents with the data JSON matching assets/data-schema.md.
+     ═══════════════════════════════════════════════════════ -->
+<script id="agent-data" type="application/json">
+{
+  "agent": {
+    "name": "Recall Outreach AI",
+    "description": "Texts and emails patients due for their annual exam.",
+    "evaluated_at": "2026-05-16",
+    "slug": "recall-outreach"
+  },
+  "verdict": {
+    "grade": "C",
+    "label": "Needs work before launch.",
+    "sub": "2 things are missing. 1 is shaky. The other 2 are solid.",
+    "counts": { "healthy": 2, "needs_work": 1, "broken": 2 }
+  },
+  "properties": [
+    { "key": "bounded", "plain_name": "Stays in its lane", "formal_name": "Bounded", "status": "healthy",
+      "description": "The agent can only do things from a short approved list. It can't make up new actions on its own.",
+      "doing": "Uses 3 pre-approved message templates only.", "problem": null, "fix": null },
+    { "key": "grounded", "plain_name": "Checks its facts", "formal_name": "Grounded", "status": "broken",
+      "description": "When the agent says something, it should be looking it up first — not guessing from memory.",
+      "doing": null,
+      "problem": "Sometimes texts patients old clinic hours that haven't been right in 6 months.",
+      "fix": "Pull current clinic hours from the live system every time it sends a message." },
+    { "key": "gated", "plain_name": "Checks before doing", "formal_name": "Gated", "status": "needs-work",
+      "description": "Before the agent does anything real, something should double-check the message and the recipient match.",
+      "doing": null,
+      "problem": "Inputs are checked. Outputs aren't — wrong-patient messages have gone out twice.",
+      "fix": "Add an output check: confirm the name and phone in the message match the patient record." },
+    { "key": "observed", "plain_name": "Nothing is hidden", "formal_name": "Observed", "status": "healthy",
+      "description": "We can see exactly what the agent did, when, and how confident it was. Every action leaves a trace.",
+      "doing": "Every send is logged with template, time, recipient, and patient response.", "problem": null, "fix": null },
+    { "key": "governed", "plain_name": "Has a stop button", "formal_name": "Governed", "status": "broken",
+      "description": "A real person should be in charge — and able to shut the agent down in one click if anything weird starts happening.",
+      "doing": null,
+      "problem": "No named owner. No kill switch. If it starts misbehaving at 2 a.m., nobody can stop it.",
+      "fix": "Assign a daily owner (Bre rotates). Add a pause button in the dashboard." }
+  ],
+  "after_state": {
+    "grade": "A",
+    "label": "Ready for real patients.",
+    "sub": "All 5 essentials in place. Cleared to launch.",
+    "properties": [
+      { "key": "bounded", "doing": "Live: 3 templates, code-enforced." },
+      { "key": "grounded", "doing": "Source: live EHR field, verified on each send." },
+      { "key": "gated", "doing": "Output gate: 100% match required." },
+      { "key": "observed", "doing": "Audit trail: complete and queryable." },
+      { "key": "governed", "doing": "Owner: Bre (rotating). Kill switch: live." }
+    ]
+  },
+  "action_plan": [
+    { "num": 1, "text": "Pull clinic hours from the live system on every send.", "owner": "Vince", "effort": "~2 hrs" },
+    { "num": 2, "text": "Add an output check that confirms name + phone match the patient record.", "owner": "Vince", "effort": "~3 hrs" },
+    { "num": 3, "text": "Assign a daily rotating owner and add a one-click pause button to the dashboard.", "owner": "Bre", "effort": "same-day" }
+  ],
+  "process_map": {
+    "flow_summary": "8 steps · 7 connections · 2 broken · 1 shaky",
+    "nodes": [
+      { "id": "node-1", "num": 1, "name": "Daily trigger", "type": "D", "type_label": "Trigger", "lane": "system", "status": "healthy",
+        "plain_description": "Wakes up every morning at 8 a.m. and starts the recall job.",
+        "input": "— (clock-based)", "output": "JobStartEvent {date, run_id}",
+        "specs": { "runtime": "AWS EventBridge cron", "latency": "< 1s", "volume": "1 run / day", "cost": "~$0.00 / run", "failure_mode": "Page on-call if missed", "owner": "Vince" },
+        "quality_chips": [ { "label": "Observed", "status": "pass" }, { "label": "Grounded n/a", "status": "na" } ] },
+      { "id": "node-2", "num": 2, "name": "Pull eligible patients", "type": "D", "type_label": "Query", "lane": "system", "status": "healthy",
+        "plain_description": "Asks the EHR for everyone who hasn't had an exam in 11+ months.",
+        "input": "JobStartEvent", "output": "Patient[] (roster)",
+        "specs": { "runtime": "Lambda · RevolutionEHR API", "latency": "< 8s p99", "volume": "~1,000 patients / day", "cost": "~$0.04 / run", "failure_mode": "Retry 3× exponential, then DLQ", "owner": "Vince" },
+        "quality_chips": [ { "label": "Observed", "status": "pass" }, { "label": "Bounded", "status": "pass" } ] },
+      { "id": "node-3", "num": 3, "name": "Filter ineligibles", "type": "D", "type_label": "Filter", "lane": "system", "status": "healthy",
+        "plain_description": "Removes patients who already have appointments, opted out, or moved away.",
+        "input": "Patient[] (roster)", "output": "Patient[] (eligible only)",
+        "specs": { "runtime": "Lambda · rule engine", "latency": "< 3s", "volume": "~1,000 in → ~600 out", "cost": "~$0.01 / run", "failure_mode": "Fail-closed (drop record)", "owner": "Vince" },
+        "quality_chips": [ { "label": "Observed", "status": "pass" }, { "label": "Bounded", "status": "pass" } ] },
+      { "id": "node-4", "num": 4, "name": "Compose message", "type": "C", "type_label": "Cognitive", "lane": "ai", "status": "broken",
+        "plain_description": "Picks one of 3 approved templates and personalizes it with patient name, clinic name, and clinic hours.",
+        "input": "Patient + TemplateID + ClinicConfig", "output": "ComposedMessage {body, confidence, refused?}",
+        "specs": { "latency": "< 2s p99", "volume": "~600 messages / day", "cost": "~$0.003 / message", "confidence_floor": "0.8 (reversible-costly)", "failure_mode": "Refuse → routes to Node 8 (human review)", "owner": "Vince" },
+        "model": { "name": "Claude Sonnet 4.6", "via": "AWS Bedrock", "model_id": "claude-sonnet-4-6-20260301", "region": "us-east-1", "baa_status": "verified", "last_changed": "2026-03-15" },
+        "prompts": {
+          "system": { "meta": "412 tokens · v6",
+            "content": "ROLE\nYou are the Recall Outreach Composer for Classic Vision Care. You compose a single recall message for a patient whose annual eye exam is 11+ months overdue.\n\nCONSTRAINTS — MUST\n- Use ONE of the 3 approved templates exactly as written: TEMPLATE_A (warm reminder), TEMPLATE_B (clinical), TEMPLATE_C (follow-up). Do not invent.\n- Personalize ONLY these slots: {first_name}, {last_visit_month}, {clinic_hours}, {booking_url}.\n- Pull clinic_hours from the live ClinicConfig.hours field passed in. If missing or stale > 30 days, REFUSE with refusal_reason = \"stale_clinic_hours\".\n- Verify {first_name} matches the patient record. If mismatch, REFUSE with refusal_reason = \"name_mismatch\".\n- Return a confidence score (0.0–1.0) reflecting your certainty the message is correct and safe to send.\n- Match channel formatting: SMS ≤ 160 chars, email subject + body.\n\nCONSTRAINTS — MUST NOT\n- Invent or modify template text.\n- Add clinical recommendations, urgency claims, or pricing.\n- Reference other patients, family, or insurance details.\n- Include diagnostic information (Rx, prior conditions).\n\nOUTPUT (JSON only, no prose)\n{\n  \"template_id\": \"A\" | \"B\" | \"C\",\n  \"body\": string,\n  \"channel\": \"sms\" | \"email\",\n  \"subject\": string | null,\n  \"confidence\": float,\n  \"refused\": bool,\n  \"refusal_reason\": \"stale_clinic_hours\" | \"name_mismatch\" | \"missing_data\" | \"low_confidence\" | null\n}\n\nIf confidence < 0.8, set refused = true with refusal_reason = \"low_confidence\"." },
+          "user": { "meta": "per-call · ~280 tokens",
+            "content": "PATIENT\n- first_name: {patient.first_name}\n- last_visit_month: {patient.last_visit_month}\n- contact_preference: {patient.contact_pref}      // \"sms\" | \"email\"\n- last_interaction: {patient.last_interaction_summary}\n\nCLINIC\n- clinic_name: {clinic.name}\n- clinic_hours: {clinic.live_hours}                // from RevolutionEHR live, max 30d old\n- booking_url: {clinic.booking_url}\n- clinic_phone: {clinic.phone}\n\nPick the most appropriate template and compose. Return JSON only." },
+          "schema": { "meta": "enforced by validator",
+            "content": "{\n  \"$schema\": \"ComposedMessage v3\",\n  \"type\": \"object\",\n  \"required\": [\"template_id\", \"body\", \"channel\", \"confidence\", \"refused\"],\n  \"properties\": {\n    \"template_id\": { \"type\": \"string\", \"enum\": [\"A\", \"B\", \"C\"] },\n    \"body\":        { \"type\": \"string\", \"maxLength\": 480 },\n    \"channel\":     { \"type\": \"string\", \"enum\": [\"sms\", \"email\"] },\n    \"confidence\":  { \"type\": \"number\", \"minimum\": 0, \"maximum\": 1 },\n    \"refused\":     { \"type\": \"boolean\" }\n  }\n}" },
+          "example": { "meta": "one-shot grounding",
+            "content": "EXAMPLE INPUT:\n{ \"patient\": { \"first_name\": \"Maria\", \"last_visit_month\": \"Apr 2025\" }, \"clinic\": { \"name\": \"CVC Kennesaw\", \"live_hours\": \"Mon-Fri 9-6, Sat 9-2\" } }\n\nEXAMPLE OUTPUT:\n{ \"template_id\": \"A\", \"body\": \"Hi Maria, it's been about a year since your last eye exam at CVC Kennesaw. We've got openings this week — book any time at cvc.com/book. Our hours: Mon-Fri 9-6, Sat 9-2.\", \"confidence\": 0.94, \"refused\": false }" }
+        },
+        "candidacy": {
+          "status": "Eligible to migrate to Claude Haiku 4.5",
+          "meter_pct": 96, "over_threshold": true,
+          "meta": "<strong>Shadow agreement:</strong> 96% over 14 days (threshold ≥ 95%) · <strong>Cost delta:</strong> −68% per message · <strong>Latency delta:</strong> −40%",
+          "recommendation": "Graduate to Haiku 4.5 after 14 more days of shadow at ≥ 95%. Owner: Vince. Watch for: confidence drift on edge cases (new patient, missing data)."
+        },
+        "quality_chips": [ { "label": "Bounded", "status": "pass" }, { "label": "Grounded", "status": "fail" }, { "label": "Observed", "status": "pass" } ],
+        "fix": { "severity": "broken", "text": "The clinic hours come from a stale config file, sometimes 6 months out of date. <strong>Fix:</strong> read clinic hours from the live RevolutionEHR field on every compose. Reject output if hours field is missing." } },
+      { "id": "node-5", "num": 5, "name": "Output gate", "type": "A", "type_label": "Approval", "lane": "system", "status": "needs-work",
+        "plain_description": "Checks the composed message before it goes out. Routes approved messages forward, refused ones to human review.",
+        "input": "ComposedMessage + Patient", "output": "ApprovedMessage | RefusedMessage",
+        "specs": { "runtime": "Lambda · validator", "latency": "< 500ms", "volume": "~600 / day (≈ 580 approved, 20 refused)", "cost": "~$0.00 / check", "failure_mode": "Fail-closed (route to refuse / human review)", "owner": "Vince" },
+        "quality_chips": [ { "label": "Bounded", "status": "pass" }, { "label": "Gated · partial", "status": "fail" }, { "label": "Observed", "status": "pass" } ],
+        "fix": { "severity": "needs-work", "text": "Validates schema and confidence, but doesn't verify the patient name + phone in the message body match the patient record. <strong>Fix:</strong> add a name/phone match check before approving." } },
+      { "id": "node-6", "num": 6, "name": "Send (SMS / email)", "type": "D", "type_label": "Action", "lane": "system", "status": "healthy",
+        "plain_description": "Sends the approved message via Twilio (SMS) or SES (email). Idempotency key prevents double-send on retry.",
+        "input": "ApprovedMessage", "output": "SendConfirmation event",
+        "specs": { "runtime": "Lambda · Twilio / SES", "latency": "< 2s p99", "volume": "~580 / day, max 50 / minute", "cost": "~$0.0075 / send", "failure_mode": "Retry 3× then DLQ + page", "owner": "Vince" },
+        "quality_chips": [ { "label": "Bounded", "status": "pass" }, { "label": "Gated", "status": "pass" }, { "label": "Observed", "status": "pass" } ] },
+      { "id": "node-7", "num": 7, "name": "Log to audit trail", "type": "D", "type_label": "Sink", "lane": "system", "status": "healthy",
+        "plain_description": "Records who got messaged, when, which template, and whether they responded.",
+        "input": "SendConfirmation event", "output": "— (terminal sink)",
+        "specs": { "runtime": "CloudWatch + DynamoDB", "latency": "< 1s", "volume": "~600 events / day", "cost": "~$0.01 / day", "failure_mode": "Retry, fail-open", "owner": "Vince" },
+        "quality_chips": [ { "label": "Observed", "status": "pass" } ] },
+      { "id": "node-8", "num": 8, "name": "Human review", "type": "H", "type_label": "Human", "lane": "human", "status": "needs-work",
+        "plain_description": "For refused messages: a human decides whether to fix and send, or drop entirely.",
+        "input": "RefusedMessage + Patient + RefusalReason", "output": "EditedMessage (→ send) | DropEvent",
+        "specs": { "runtime": "Manual · Bre's review queue (Linear)", "latency": "< 4 business hours, else auto-drop", "volume": "~20 / day", "cost": "~$2.50 / day (labor)", "failure_mode": "Timeout → auto-drop + notify owner", "owner": "Bre" },
+        "judgment": { "question": "\"Is this refused message recoverable? If so, what does it need to say?\"", "meta": "<strong>Volume:</strong> ~20 / day · <strong>Time per decision:</strong> ~30s · <strong>Reviewer:</strong> Bre (rotating) · <strong>Inter-rater agreement:</strong> 92% (Bre vs Angela, sampled monthly)" },
+        "candidacy": { "is_judgment": true, "status": "Not yet ready to graduate", "meter_pct": 85, "over_threshold": false, "meta": "<strong>Shadow AI agreement:</strong> 85% over 90 days (threshold ≥ 95%) · <strong>Gap:</strong> AI struggles when refusal reason is ambiguous.", "recommendation": "Path to graduation: fix the Compose grounding issue upstream (Node 4) — that drops refuse volume and gives the AI cleaner training data. Re-check candidacy in 60 days." },
+        "quality_chips": [ { "label": "Observed", "status": "pass" }, { "label": "Bounded · 2 outcomes", "status": "pass" }, { "label": "Governed · SLA breaches", "status": "fail" } ],
+        "fix": { "severity": "needs-work", "text": "SLA breached 4× last month — reviews sat &gt; 4 hours during Bre's PTO. <strong>Fix:</strong> add a rotating backup reviewer (Angela) for coverage gaps." } }
+    ],
+    "edges": [
+      { "id": "edge-1", "from": 1, "to": 2, "label": "sync", "status": "healthy", "plain_description": "Trigger fires the EHR query.",
+        "specs": { "trigger_type": "Synchronous invoke", "latency_budget": "< 500ms p99", "volume": "1 / day", "baseline_failure": "< 0.1%", "data_contract": "JobStartEvent (empty payload)", "retry_dlq": "EventBridge DLQ on 3 fails" } },
+      { "id": "edge-2", "from": 2, "to": 3, "label": "sync", "status": "healthy", "plain_description": "Patient roster passed to the filter.",
+        "specs": { "trigger_type": "Sync function chain", "latency_budget": "< 100ms", "volume": "~1,000 records / call", "baseline_failure": "< 0.05%", "data_contract": "Patient[] (JSON, schema-validated)", "retry_dlq": "In-memory; failure pages on-call" } },
+      { "id": "edge-3", "from": 3, "to": 4, "label": "queue", "status": "healthy", "plain_description": "Each eligible patient hands off to the AI composer through a queue.",
+        "specs": { "trigger_type": "SQS queue (decouples burst)", "latency_budget": "< 30s end-to-end", "volume": "~600 messages / day", "baseline_failure": "< 0.5%", "data_contract": "PatientContext (JSON)", "retry_dlq": "3× retry → recall-compose-dlq" } },
+      { "id": "edge-4", "from": 4, "to": 5, "label": "sync", "status": "broken", "plain_description": "Composed message passes to the output gate.",
+        "specs": { "trigger_type": "Sync function chain", "latency_budget": "< 200ms", "volume": "~600 / day", "baseline_failure": "Unknown — no payload telemetry", "data_contract": "Message + PatientRef — no schema enforced", "retry_dlq": "None — fail-open" },
+        "fix": { "severity": "broken", "text": "No schema enforced on the payload. <strong>Fix:</strong> define a strict ComposedMessage type with patient ID + name + phone + body, reject anything that doesn't match." } },
+      { "id": "edge-5", "from": 5, "to": 6, "label": "approved · async", "sublabel": "approved", "status": "needs-work", "plain_description": "Approved messages move from the gate to the send action.",
+        "specs": { "trigger_type": "Async via SNS topic", "latency_budget": "< 5s p99", "volume": "~580 / day", "baseline_failure": "< 0.2%", "data_contract": "ApprovedMessage (JSON)", "retry_dlq": "3× retry; no DLQ defined" },
+        "fix": { "severity": "needs-work", "text": "No DLQ — a failed send vanishes silently after 3 retries. <strong>Fix:</strong> add recall-send-dlq with daily review." } },
+      { "id": "edge-6", "from": 6, "to": 7, "label": "event", "status": "healthy", "plain_description": "Send-confirmation event fires the audit log.",
+        "specs": { "trigger_type": "EventBridge event", "latency_budget": "< 1s", "volume": "~600 / day", "baseline_failure": "< 0.1%", "data_contract": "SendEvent (schema-locked)", "retry_dlq": "Retry 5× → audit-log-dlq" } },
+      { "id": "edge-7", "from": 5, "to": 8, "label": "refused · queue", "sublabel": "refused", "status": "needs-work", "plain_description": "Refused messages route to Bre's review queue.",
+        "specs": { "trigger_type": "Async queue (Linear)", "latency_budget": "< 4 business hours", "volume": "~20 / day", "baseline_failure": "~5% SLA breach (coverage gaps)", "data_contract": "RefusedMessage + RefusalReason + Patient", "retry_dlq": "SLA timeout → auto-drop + notify" },
+        "fix": { "severity": "needs-work", "text": "SLA breached 4× last month during Bre's PTO. <strong>Fix:</strong> rotating backup reviewer (Angela)." } }
+    ],
+    "branches": [
+      { "after_node": 7, "label": "Refuse branch from step 5" }
+    ],
+    "memory": {
+      "title": "What the agent stores, where, and for how long",
+      "sub": "Per-run context lives in memory only. Persistent state is purpose-scoped. Audit log retained for HIPAA.",
+      "rows": [
+        ["Working memory", "Patient context object passed through pipeline. Lives only for the duration of one run (~30s). Not persisted."],
+        ["Persistent state", "Dedup key store (DynamoDB) — last 90 days of send history per patient to prevent re-messaging."],
+        ["Audit log", "All send events + outcomes. 7-year retention (HIPAA). Encrypted at rest."],
+        ["Conversation memory", "None — single-turn agent. No cross-run learning from patient responses (yet)."],
+        ["Classification", "PHI (patient identifiers + contact data). Confidential."],
+        ["Owner", "Vince (technical) · Bre (operational)"]
+      ]
+    },
+    "state_machine": {
+      "title": "Every state the work passes through, with SLAs",
+      "sub": "A run can only move between named states. Each has a max time before escalation.",
+      "main_flow": [
+        { "name": "Triggered" }, { "name": "Fetching" }, { "name": "Filtering" }, { "name": "Composing" }, { "name": "Gating" }, { "name": "Sending" }, { "name": "Sent", "kind": "terminal" }
+      ],
+      "branch_flow": [
+        { "name": "Gating" }, { "name": "Human review" }, { "name": "Sent (edited)", "kind": "terminal", "or": true }, { "name": "Dropped", "kind": "error" }
+      ],
+      "sla_rows": [
+        ["Composing", "Max 60s, then escalate to retry queue"],
+        ["Gating", "Max 5s, then auto-route to refuse"],
+        ["Sending", "Max 30s, then DLQ + page on-call"],
+        ["Human review", "Max 4 business hours, then auto-drop with notification"],
+        ["State storage", "DynamoDB · run_state table, partition by run_id"]
+      ]
+    },
+    "recommendations": [
+      { "priority": "critical", "priority_label": "Critical", "title": "Pull live clinic hours into Compose",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#node-4\">Node 4 · Compose</a> · Grounded fail · Owner Vince · ~2 hrs",
+        "impact": "Stops outdated info from reaching patients. Removes the root cause behind the C grade." },
+      { "priority": "critical", "priority_label": "Critical", "title": "Assign owner + kill switch (governance)",
+        "meta_html": "Affects <strong>Governed</strong> (cross-cutting) · Owner Bre · same-day",
+        "impact": "Closes the largest incident-response gap. No agent ships without a kill switch." },
+      { "priority": "high", "priority_label": "High", "title": "Add name + phone match check to Output Gate",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#node-5\">Node 5 · Output gate</a> · Gated partial · Owner Vince · ~3 hrs",
+        "impact": "Prevents wrong-patient sends — already happened twice in the last 60 days." },
+      { "priority": "high", "priority_label": "High", "title": "Enforce schema on edge 4 → 5",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#edge-4\">Edge 4 → 5</a> · No data contract · Owner Vince · ~1 hr",
+        "impact": "Catches malformed payloads at the boundary so Node 5 can validate properly." },
+      { "priority": "medium", "priority_label": "Medium", "title": "Add DLQ for edge 5 → 6 (approved send path)",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#edge-5\">Edge 5 → 6</a> · No DLQ · Owner Vince · ~2 hrs",
+        "impact": "Failed sends will no longer silently drop after 3 retries." },
+      { "priority": "medium", "priority_label": "Medium", "title": "Add backup human reviewer for SLA coverage",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#node-8\">Node 8</a> + <a class=\"rec-link\" href=\"#edge-7\">Edge 5 → 8</a> · SLA breaches · Owner Bre · same-day",
+        "impact": "Angela rotates in during Bre's PTO. Eliminates last month's 4 SLA breaches." },
+      { "priority": "opt", "priority_label": "Optimization", "title": "Graduate Compose model to Claude Haiku 4.5",
+        "meta_html": "Affects <a class=\"rec-link\" href=\"#node-4\">Node 4</a> · Model change candidate · Owner Vince · 14 more shadow days",
+        "impact": "−68% cost and −40% latency at no quality regression. Defer until grounding fix lands." }
+    ]
+  }
+}
+</script>
+
+<script>
+// ═══════════════════════ AGENTTWIN RENDERER ═══════════════════════
+// Reads the JSON in #agent-data and populates all dynamic sections.
+// The skill never modifies this script — only the JSON above.
+
+const DATA = JSON.parse(document.getElementById('agent-data').textContent);
+
+const ICONS = {
+  bounded: `<path d="M12 2L4 6v6c0 5 3.5 9.5 8 10 4.5-0.5 8-5 8-10V6l-8-4z"/>`,
+  grounded: `<path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4V4z"/><path d="M4 20h16"/><path d="M8 8h8M8 12h6"/>`,
+  gated: `<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/>`,
+  observed: `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>`,
+  governed: `<polygon points="6 3, 18 3, 21 6, 21 18, 18 21, 6 21, 3 18, 3 6"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>`
+};
+
+const LANE_ABBR = { system: 'SYS', ai: 'AI', human: 'HUM' };
+const LANE_LABEL = { system: 'System', ai: 'AI', human: 'Human' };
+
+function escapeText(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function gradeClass(grade) { return grade === 'A' || grade === 'B' ? 'is-pass' : (grade === 'D' || grade === 'F') ? 'is-fail' : ''; }
+function ink(status) { return status === 'broken' ? 'var(--danger-ink)' : status === 'needs-work' ? 'var(--warning-ink)' : 'var(--success-ink)'; }
+
+// ─── HEADER + FOOTER ───
+function renderHeader() {
+  document.getElementById('version-pill').textContent = `v1 · ${DATA.agent.name}`;
+  document.getElementById('footer-tag').textContent = `AgentTwin · ${DATA.agent.name} · ${DATA.agent.evaluated_at || ''}`;
+  document.title = `AgentTwin · ${DATA.agent.name}`;
+}
+
+// ─── GRADE CARD ───
+function renderGradeCard(useAfter) {
+  const v = useAfter ? DATA.after_state : DATA.verdict;
+  const cls = gradeClass(v.grade);
+  const counts = useAfter
+    ? `<span class="count-pill healthy"><span class="count-dot"></span>5 healthy</span>`
+    : [
+        DATA.verdict.counts.healthy ? `<span class="count-pill healthy"><span class="count-dot"></span>${DATA.verdict.counts.healthy} healthy</span>` : '',
+        DATA.verdict.counts.needs_work ? `<span class="count-pill needs-work"><span class="count-dot"></span>${DATA.verdict.counts.needs_work} needs work</span>` : '',
+        DATA.verdict.counts.broken ? `<span class="count-pill broken"><span class="count-dot"></span>${DATA.verdict.counts.broken} broken</span>` : ''
+      ].filter(Boolean).join('');
+  document.getElementById('grade-card-container').innerHTML = `
+    <div class="grade-card ${useAfter ? 'is-after' : ''}">
+      <div class="grade-card-inner">
+        <div class="agent-meta">Agent · ${escapeText(DATA.agent.name)}</div>
+        <div class="agent-name serif">${escapeText(DATA.agent.description)}</div>
+        <div class="grade-row">
+          <div class="grade-circle ${cls}"><div class="grade-letter serif">${escapeText(v.grade)}</div><div class="grade-label">Health</div></div>
+          <div class="verdict-text">
+            <div class="verdict-headline serif">${escapeText(v.label)}</div>
+            <div class="verdict-sub">${escapeText(v.sub)}</div>
+            <div class="verdict-counts">${counts}</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── PROPERTIES (SUMMARY) ───
+function renderProperties(useAfter) {
+  const props = DATA.properties;
+  const afterMap = useAfter ? Object.fromEntries(DATA.after_state.properties.map(p => [p.key, p])) : null;
+  document.getElementById('props-wrap').innerHTML = props.map(p => {
+    const status = useAfter ? 'healthy' : p.status;
+    const doing = useAfter ? (afterMap[p.key] && afterMap[p.key].doing) : p.doing;
+    const badge = status === 'healthy' ? 'Healthy' : status === 'needs-work' ? 'Needs work' : 'Broken';
+    const icon = ICONS[p.key] || '';
+    let detailRows = '';
+    if (status === 'healthy' && doing) {
+      detailRows = `<div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Doing</div><div class="prop-detail-body">${escapeText(doing)}</div></div></div>`;
+    } else if (!useAfter && (p.problem || p.fix)) {
+      detailRows = `<div class="prop-detail-row">
+        ${p.problem ? `<div class="prop-detail-item"><div class="prop-detail-label">Problem</div><div class="prop-detail-body">${escapeText(p.problem)}</div></div>` : ''}
+        ${p.fix ? `<div class="prop-detail-item"><div class="prop-detail-label">Fix</div><div class="prop-detail-body">${escapeText(p.fix)}</div></div>` : ''}
+      </div>`;
+    }
+    return `<div class="prop-card status-${status}">
+      <div class="prop-card-top">
+        <div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: ${ink(status)};">${icon}</svg></div>
+        <div class="prop-content">
+          <div class="prop-card-titles"><div><div class="prop-title serif">${escapeText(p.plain_name)}</div><div class="prop-formal">${escapeText(p.formal_name)}</div></div><div class="status-badge ${status}">${badge}</div></div>
+          <div class="prop-description">${escapeText(p.description)}</div>
+          ${detailRows}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── COMPARE STRIP ───
+function renderCompare() {
+  const beforeDots = DATA.properties.map(p => `<div class="compare-dot ${p.status}"></div>`).join('');
+  const afterDots = DATA.properties.map(() => `<div class="compare-dot healthy"></div>`).join('');
+  document.getElementById('compare-container').innerHTML = `
+    <div class="compare-card">
+      <div class="compare-eyebrow">The Twin</div>
+      <div class="compare-title">Same agent. Fixes away from ready.</div>
+      <div class="compare-row"><div class="compare-label">Now</div><div class="compare-dots">${beforeDots}</div></div>
+      <div class="compare-row after-row"><div class="compare-label">After</div><div class="compare-dots">${afterDots}</div></div>
+    </div>`;
+}
+
+// ─── ACTION PLAN ───
+function renderActionPlan() {
+  const items = (DATA.action_plan || []).map(a => `<li class="action-item"><div class="action-num serif">${a.num}</div><div class="action-text">${escapeText(a.text)}<span class="who">Owner: ${escapeText(a.owner)} · Effort: ${escapeText(a.effort)}</span></div></li>`).join('');
+  const n = DATA.action_plan ? DATA.action_plan.length : 0;
+  document.getElementById('action-plan-container').innerHTML = `
+    <div class="action-card">
+      <div class="action-eyebrow">Your Fix List</div>
+      <div class="action-title serif">Do these ${n} things. Then re-check.</div>
+      <div class="action-sub">Each fix is small. Together they move the agent toward ready.</div>
+      <ol class="action-list">${items}</ol>
+    </div>`;
+}
+
+// ─── MAP OVERVIEW ───
+function renderMapOverview() {
+  const m = DATA.process_map;
+  const branchAfter = {};
+  (m.branches || []).forEach(b => { branchAfter[b.after_node] = b.label; });
+
+  let flowHTML = '';
+  m.nodes.forEach((n, i) => {
+    flowHTML += `<div class="map-node ${n.status}" data-target="#${n.id}"><span class="map-node-num">${n.num}</span><span class="map-node-name">${escapeText(n.name)}</span><span class="type-pill ${n.type.toLowerCase()}">${n.type}</span><span class="lane-pill ${n.lane}">${LANE_ABBR[n.lane] || ''}</span><span class="status-dot ${n.status}"></span></div>`;
+    // Insert edge if not last and edge exists between this num and next num
+    const nextNum = m.nodes[i+1] ? m.nodes[i+1].num : null;
+    if (nextNum) {
+      const edge = m.edges.find(e => e.from === n.num && e.to === nextNum);
+      if (edge) {
+        flowHTML += `<div class="map-edge" data-target="#${edge.id}"><div class="map-edge-line ${edge.status}"></div><div class="map-edge-label">${escapeText(edge.label)}</div><div class="map-edge-line ${edge.status}"></div></div>`;
+      }
+    }
+    // Branch divider after this node?
+    if (branchAfter[n.num]) {
+      flowHTML += `<div class="branch-divider"><div class="line"></div><div class="label">${escapeText(branchAfter[n.num])}</div><div class="line"></div></div>`;
+      // Render any branch edges + branch target nodes
+      const branchEdges = m.edges.filter(e => e.sublabel && !flowHTML.includes(`#${e.id}`));
+      branchEdges.forEach(be => {
+        const targetNode = m.nodes.find(nn => nn.num === be.to);
+        if (targetNode) {
+          flowHTML += `<div class="map-edge" data-target="#${be.id}"><div class="map-edge-line ${be.status}"></div><div class="map-edge-label">${escapeText(be.label)}</div><div class="map-edge-line ${be.status}"></div></div>`;
+          flowHTML += `<div class="map-node ${targetNode.status}" data-target="#${targetNode.id}"><span class="map-node-num">${targetNode.num}</span><span class="map-node-name">${escapeText(targetNode.name)}</span><span class="type-pill ${targetNode.type.toLowerCase()}">${targetNode.type}</span><span class="lane-pill ${targetNode.lane}">${LANE_ABBR[targetNode.lane] || ''}</span><span class="status-dot ${targetNode.status}"></span></div>`;
+        }
+      });
+    }
+  });
+
+  document.getElementById('map-overview-container').innerHTML = `
+    <div class="map-overview">
+      <div class="map-overview-header">
+        <div><div class="map-overview-title serif">Flow at a glance</div><div class="map-overview-sub">${escapeText(m.flow_summary)}</div></div>
+      </div>
+      <div class="map-legends">
+        <div class="map-legend-row"><span class="label">Runtime</span>
+          <div class="map-legend-item"><span class="map-legend-tag d">D</span>Deterministic</div>
+          <div class="map-legend-item"><span class="map-legend-tag c">C</span>Cognitive</div>
+          <div class="map-legend-item"><span class="map-legend-tag a">A</span>Approval</div>
+          <div class="map-legend-item"><span class="map-legend-tag h">H</span>Human</div>
+        </div>
+        <div class="map-legend-row"><span class="label">Lane</span>
+          <div class="map-legend-item"><span class="lane-swatch system"></span>System</div>
+          <div class="map-legend-item"><span class="lane-swatch ai"></span>AI</div>
+          <div class="map-legend-item"><span class="lane-swatch human"></span>Human</div>
+        </div>
+      </div>
+      <div class="map-flow">${flowHTML}</div>
+    </div>`;
+}
+
+// ─── RECOMMENDATIONS ───
+function renderRecommendations() {
+  const recs = (DATA.process_map.recommendations || []);
+  const items = recs.map(r => `<li class="rec-item"><span class="rec-priority ${r.priority}">${escapeText(r.priority_label)}</span><div><div class="rec-title serif">${escapeText(r.title)}</div><div class="rec-meta">${r.meta_html}</div><div class="rec-impact">${escapeText(r.impact)}</div></div></li>`).join('');
+  document.getElementById('recommendations-container').innerHTML = `
+    <div class="recs-card">
+      <div class="recs-eyebrow">Recommendations</div>
+      <div class="recs-title serif">${recs.length} actions, ranked by impact</div>
+      <div class="recs-sub">Pulled from every broken node, broken edge, and missing system property. Critical first.</div>
+      <ol class="recs-list">${items}</ol>
+    </div>`;
+}
+
+// ─── CROSS-CUTTING (MEMORY + STATE MACHINE) ───
+function renderCrossCutting() {
+  const mem = DATA.process_map.memory;
+  const sm = DATA.process_map.state_machine;
+  const memRows = (mem.rows || []).map(r => `<div class="detail-row"><div class="detail-row-label">${escapeText(r[0])}</div><div class="detail-row-val">${escapeText(r[1])}</div></div>`).join('');
+  const renderStateChip = c => `<span class="state-chip${c.kind ? ' ' + c.kind : ''}">${escapeText(c.name)}</span>`;
+  const stateChips = arr => arr.map((c, i) => {
+    let html = renderStateChip(c);
+    if (i < arr.length - 1) {
+      html += c.or ? `<span style="font-size: 11px; color: var(--muted); margin: 0 4px;">or</span>` : `<span class="state-arrow">→</span>`;
+    }
+    return html;
+  }).join('');
+  const slaRows = (sm.sla_rows || []).map(r => `<div class="detail-row"><div class="detail-row-label">${escapeText(r[0])}</div><div class="detail-row-val">${escapeText(r[1])}</div></div>`).join('');
+  document.getElementById('cross-cutting-container').innerHTML = `
+    <div class="cross-card">
+      <div class="cross-eyebrow">Memory</div>
+      <div class="cross-title serif">${escapeText(mem.title)}</div>
+      <div class="cross-sub">${escapeText(mem.sub)}</div>
+      <div class="cross-content"><div class="detail-table">${memRows}</div></div>
+    </div>
+    <div class="cross-card">
+      <div class="cross-eyebrow">State machine</div>
+      <div class="cross-title serif">${escapeText(sm.title)}</div>
+      <div class="cross-sub">${escapeText(sm.sub)}</div>
+      <div class="cross-content">
+        <div class="state-flow">${stateChips(sm.main_flow || [])}</div>
+        ${sm.branch_flow ? `<div class="state-flow" style="margin-top: 8px;">${stateChips(sm.branch_flow)}</div>` : ''}
+        <div class="detail-table" style="margin-top: 18px;"><div class="detail-table-eyebrow">SLA per state</div>${slaRows}</div>
+      </div>
+    </div>`;
+}
+
+// ─── NODE DETAIL ───
+function renderNodeDetail(n) {
+  const typeLabel = `${n.type} · ${escapeText(n.type_label || '')}`;
+  const badge = n.status === 'healthy' ? 'Healthy' : n.status === 'needs-work' ? 'Needs work' : 'Broken';
+  const specs = n.specs || {};
+  const specMap = [
+    ['Runtime', specs.runtime],
+    ['Latency', specs.latency],
+    ['Latency / SLA', specs.latency_sla],
+    ['Volume', specs.volume],
+    ['Cost', specs.cost],
+    ['Confidence floor', specs.confidence_floor],
+    ['Failure mode', specs.failure_mode],
+    ['Owner', specs.owner]
+  ].filter(p => p[1]);
+  const specRows = specMap.map(p => `<div class="detail-row"><div class="detail-row-label">${p[0]}</div><div class="detail-row-val">${escapeText(p[1])}</div></div>`).join('');
+  const chips = (n.quality_chips || []).map(c => `<span class="quality-chip ${c.status}"><span class="quality-chip-dot"></span>${escapeText(c.label)}</span>`).join('');
+
+  let modelHTML = '';
+  if (n.model) {
+    modelHTML = `<div class="model-block"><div class="model-eyebrow">Model on run</div><div class="model-name">${escapeText(n.model.name)}</div><div class="model-meta">via ${escapeText(n.model.via)} · ${escapeText(n.model.model_id)} · region ${escapeText(n.model.region)} · BAA ${escapeText(n.model.baa_status)} · last changed ${escapeText(n.model.last_changed)}</div></div>`;
+  }
+
+  let promptsHTML = '';
+  if (n.prompts) {
+    const ps = n.prompts;
+    const details = [
+      ['System prompt', ps.system],
+      ['User prompt template', ps.user],
+      ['Output schema (JSON)', ps.schema],
+      ['One-shot example', ps.example]
+    ].filter(d => d[1]);
+    const detailsHTML = details.map(([name, p]) => `<details class="prompt-details"><summary class="prompt-summary"><span class="prompt-summary-name">${escapeText(name)}</span><span class="prompt-summary-meta">${escapeText(p.meta || '')}</span></summary><pre class="prompt-content">${escapeText(p.content)}</pre></details>`).join('');
+    promptsHTML = `<div class="prompts-section"><div class="prompts-eyebrow">Prompts on run</div><div class="prompts-title">What this AI is actually being told</div>${detailsHTML}</div>`;
+  }
+
+  let judgmentHTML = '';
+  if (n.judgment) {
+    judgmentHTML = `<div class="judgment-block"><div class="judgment-eyebrow">What's being judged</div><div class="judgment-question">${escapeText(n.judgment.question)}</div><div class="judgment-meta">${n.judgment.meta}</div></div>`;
+  }
+
+  let candidacyHTML = '';
+  if (n.candidacy) {
+    const c = n.candidacy;
+    const block = c.is_judgment ? 'candidacy-block judgment' : 'candidacy-block';
+    const eyebrow = c.is_judgment ? 'Automation candidacy' : 'Model change candidate';
+    const meter = c.over_threshold ? 'candidacy-meter-fill over' : 'candidacy-meter-fill';
+    candidacyHTML = `<div class="${block}"><div class="candidacy-eyebrow">${eyebrow}</div><div class="candidacy-status">${escapeText(c.status)}</div><div class="candidacy-meter"><div class="${meter}" style="width: ${c.meter_pct}%;"></div></div><div class="candidacy-meta">${c.meta}</div><div class="candidacy-recommendation">${escapeText(c.recommendation)}</div></div>`;
+  }
+
+  let fixHTML = '';
+  if (n.fix) {
+    fixHTML = `<div class="fix-block ${n.fix.severity === 'broken' ? 'broken' : ''}"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">${n.fix.text}</div></div>`;
+  }
+
+  return `<div class="detail-card ${n.status}" id="${n.id}">
+    <div class="detail-card-top">
+      <div class="detail-num serif">${n.num}</div>
+      <div>
+        <div class="detail-name">${escapeText(n.name)}</div>
+        <div class="detail-meta-line"><span class="type-pill ${n.type.toLowerCase()}">${typeLabel}</span><span class="lane-pill ${n.lane}">${LANE_LABEL[n.lane] || ''}</span><span class="status-badge ${n.status}">${badge}</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>${escapeText(n.plain_description)}</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">${escapeText(n.input)}</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">${escapeText(n.output)}</div></div></div>
+    ${modelHTML}
+    ${promptsHTML}
+    ${judgmentHTML}
+    ${candidacyHTML}
+    <div class="detail-table"><div class="detail-table-eyebrow">Specs</div>${specRows}</div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips">${chips}</div></div>
+    ${fixHTML}
+  </div>`;
+}
+
+// ─── EDGE DETAIL ───
+function renderEdgeDetail(e) {
+  const badge = e.status === 'healthy' ? 'Healthy' : e.status === 'needs-work' ? 'Needs work' : 'Broken';
+  const s = e.specs || {};
+  const rows = [
+    ['Trigger type', s.trigger_type],
+    ['Latency budget', s.latency_budget],
+    ['Volume', s.volume],
+    ['Baseline failure', s.baseline_failure],
+    ['Data contract', s.data_contract],
+    ['Retry / DLQ', s.retry_dlq]
+  ].filter(r => r[1]);
+  const rowsHTML = rows.map(r => `<div class="detail-row"><div class="detail-row-label">${r[0]}</div><div class="detail-row-val">${escapeText(r[1])}</div></div>`).join('');
+  const sub = e.sublabel ? ` <span style="font-size: 10px; color: var(--muted); margin-left: 4px;">${escapeText(e.sublabel)}</span>` : '';
+  const fixHTML = e.fix ? `<div class="fix-block ${e.fix.severity === 'broken' ? 'broken' : ''}"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">${e.fix.text}</div></div>` : '';
+  return `<div class="edge-card ${e.status}" id="${e.id}">
+    <div class="edge-header"><div class="edge-name">Step ${e.from} <span class="arrow">→</span> Step ${e.to}${sub}</div><span class="status-badge ${e.status}">${badge}</span></div>
+    <div class="edge-plain">${escapeText(e.plain_description)}</div>
+    <div class="detail-table">${rowsHTML}</div>
+    ${fixHTML}
+  </div>`;
+}
+
+function renderAllNodes() {
+  document.getElementById('nodes-detail-container').innerHTML = DATA.process_map.nodes.map(renderNodeDetail).join('');
+  document.getElementById('node-count').textContent = DATA.process_map.nodes.length;
+}
+function renderAllEdges() {
+  document.getElementById('edges-detail-container').innerHTML = DATA.process_map.edges.map(renderEdgeDetail).join('');
+  document.getElementById('edge-count').textContent = DATA.process_map.edges.length;
+}
+
+// ─── INITIAL RENDER ───
+function renderAll() {
+  renderHeader();
+  renderGradeCard(false);
+  renderProperties(false);
+  renderCompare();
+  renderActionPlan();
+  renderMapOverview();
+  renderRecommendations();
+  renderCrossCutting();
+  renderAllNodes();
+  renderAllEdges();
+  attachClicks();
+}
+
+function attachClicks() {
+  document.querySelectorAll('[data-target]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return;
+      const t = document.querySelector(el.dataset.target);
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+// ─── INTERACTIONS ───
+document.getElementById('tab-summary').addEventListener('click', () => {
+  document.getElementById('tab-summary').classList.add('active');
+  document.getElementById('tab-map').classList.remove('active');
+  document.getElementById('view-summary').classList.remove('view-hidden');
+  document.getElementById('view-map').classList.add('view-hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.getElementById('tab-map').addEventListener('click', () => {
+  document.getElementById('tab-map').classList.add('active');
+  document.getElementById('tab-summary').classList.remove('active');
+  document.getElementById('view-map').classList.remove('view-hidden');
+  document.getElementById('view-summary').classList.add('view-hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.getElementById('btn-before').addEventListener('click', () => {
+  document.getElementById('btn-before').classList.add('active');
+  document.getElementById('btn-after').classList.remove('active');
+  renderGradeCard(false);
+  renderProperties(false);
+});
+document.getElementById('btn-after').addEventListener('click', () => {
+  document.getElementById('btn-after').classList.add('active');
+  document.getElementById('btn-before').classList.remove('active');
+  renderGradeCard(true);
+  renderProperties(true);
+});
+
+renderAll();
+</script>
+
+</body>
+</html>

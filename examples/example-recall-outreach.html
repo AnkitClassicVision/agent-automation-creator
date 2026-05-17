@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AgentTwin v4 — Agent Health Check + Process Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2;
+    --paper: #FFFFFF;
+    --ink: #1A1B1F;
+    --ink-soft: #2A2D33;
+    --muted: #6B6D73;
+    --muted-2: #A8A9AE;
+    --line: #E8E5DE;
+    --line-soft: #F0EEE8;
+    --brand: #0F766E;
+    --brand-soft: #CCFBF1;
+    --brand-ink: #134E4A;
+    --success: #15803D;
+    --success-soft: #DCFCE7;
+    --success-ink: #14532D;
+    --warning: #B45309;
+    --warning-soft: #FEF3C7;
+    --warning-ink: #7C2D12;
+    --danger: #BE123C;
+    --danger-soft: #FEE2E2;
+    --danger-ink: #831843;
+    --type-d: #0369A1; --type-d-soft: #E0F2FE;
+    --type-c: #A16207; --type-c-soft: #FEF9C3;
+    --type-a: #7E22CE; --type-a-soft: #F3E8FF;
+    --type-h: #475569; --type-h-soft: #F1F5F9;
+    --lane-system: #0F766E; --lane-system-soft: #CCFBF1;
+    --lane-ai: #A16207; --lane-ai-soft: #FEF9C3;
+    --lane-human: #475569; --lane-human-soft: #F1F5F9;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--cream); color: var(--ink); font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.55; font-size: 15px; scroll-behavior: smooth; }
+  body { padding: 16px; max-width: 720px; margin: 0 auto; padding-bottom: 80px; }
+  .serif { font-family: 'Fraunces', serif; font-weight: 600; letter-spacing: -0.015em; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 4px 18px; }
+  .wordmark { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+  .wordmark span { color: var(--brand); font-style: italic; }
+  .version-pill { font-size: 10px; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; border: 1px solid var(--line); padding: 4px 8px; border-radius: 100px; background: var(--paper); }
+
+  .view-tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 24px; position: sticky; top: 8px; z-index: 10; }
+  .view-tab { border: none; background: transparent; padding: 11px 16px; border-radius: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .15s; }
+  .view-tab.active { background: var(--ink); color: var(--paper); }
+
+  .headline { padding: 4px 4px 24px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
+  h1 { font-family: 'Fraunces', serif; font-size: 38px; font-weight: 700; letter-spacing: -0.025em; line-height: 1.05; color: var(--ink); }
+  h1 .accent { color: var(--brand); font-style: italic; font-weight: 500; }
+  .subhead { color: var(--muted); font-size: 15px; margin-top: 12px; max-width: 540px; }
+
+  .toggle-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 100px; padding: 4px; display: inline-flex; margin: 8px 4px 20px; }
+  .toggle-btn { border: none; background: transparent; padding: 8px 18px; border-radius: 100px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all .2s; }
+  .toggle-btn.active { background: var(--ink); color: var(--paper); }
+  .toggle-btn.active.after-active { background: var(--success); }
+
+  .grade-card { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; padding: 32px 28px; margin-bottom: 16px; position: relative; overflow: hidden; }
+  .grade-card::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at top right, rgba(180, 83, 9, 0.04), transparent 60%); pointer-events: none; }
+  .grade-card.is-after::before { background: radial-gradient(circle at top right, rgba(21, 128, 61, 0.06), transparent 60%); }
+  .grade-card-inner { position: relative; }
+  .agent-meta { font-size: 12px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .agent-name { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 24px; }
+  .grade-row { display: flex; align-items: center; gap: 24px; }
+  .grade-circle { width: 110px; height: 110px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; background: var(--warning-soft); border: 2px solid var(--warning); }
+  .grade-circle.is-pass { background: var(--success-soft); border-color: var(--success); }
+  .grade-letter { font-family: 'Fraunces', serif; font-size: 48px; font-weight: 700; letter-spacing: -0.04em; color: var(--warning-ink); line-height: 1; }
+  .grade-circle.is-pass .grade-letter { color: var(--success-ink); }
+  .grade-label { font-size: 9px; letter-spacing: 0.18em; color: var(--warning-ink); text-transform: uppercase; margin-top: 4px; font-weight: 600; }
+  .grade-circle.is-pass .grade-label { color: var(--success-ink); }
+  .verdict-text { flex: 1; }
+  .verdict-headline { font-family: 'Fraunces', serif; font-size: 22px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em; }
+  .verdict-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+  .verdict-counts { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .count-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+  .count-pill.healthy { background: var(--success-soft); color: var(--success-ink); }
+  .count-pill.needs-work { background: var(--warning-soft); color: var(--warning-ink); }
+  .count-pill.broken { background: var(--danger-soft); color: var(--danger-ink); }
+  .count-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .count-pill.healthy .count-dot { background: var(--success); }
+  .count-pill.needs-work .count-dot { background: var(--warning); }
+  .count-pill.broken .count-dot { background: var(--danger); }
+
+  .section-heading { padding: 32px 4px 18px; }
+  .section-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 600; letter-spacing: -0.02em; }
+  .section-sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  .prop-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px; margin-bottom: 12px; transition: all .25s; }
+  .prop-card.status-healthy { border-color: var(--success); border-width: 1.5px; }
+  .prop-card.status-needs-work { border-color: var(--warning); border-width: 1.5px; }
+  .prop-card.status-broken { border-color: var(--danger); border-width: 1.5px; background: linear-gradient(to bottom right, var(--paper) 60%, var(--danger-soft) 220%); }
+  .prop-card-top { display: flex; gap: 14px; align-items: flex-start; }
+  .icon-wrap { width: 44px; height: 44px; border-radius: 11px; background: var(--line-soft); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .prop-card.status-healthy .icon-wrap { background: var(--success-soft); }
+  .prop-card.status-needs-work .icon-wrap { background: var(--warning-soft); }
+  .prop-card.status-broken .icon-wrap { background: var(--danger-soft); }
+  .icon-wrap svg { width: 24px; height: 24px; }
+  .prop-content { flex: 1; min-width: 0; }
+  .prop-card-titles { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .prop-title { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+  .prop-formal { font-size: 10px; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-top: 3px; font-weight: 600; }
+  .status-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; padding: 5px 10px; border-radius: 100px; flex-shrink: 0; white-space: nowrap; }
+  .status-badge.healthy { background: var(--success-soft); color: var(--success-ink); }
+  .status-badge.needs-work { background: var(--warning-soft); color: var(--warning-ink); }
+  .status-badge.broken { background: var(--danger-soft); color: var(--danger-ink); }
+  .prop-description { font-size: 14px; color: var(--ink-soft); margin-top: 12px; line-height: 1.55; }
+  .prop-detail-row { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+  .prop-detail-item { font-size: 13px; color: var(--muted); display: grid; grid-template-columns: 56px 1fr; gap: 10px; }
+  .prop-detail-label { font-weight: 600; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding-top: 2px; }
+  .prop-card.status-healthy .prop-detail-label { color: var(--success-ink); }
+  .prop-card.status-needs-work .prop-detail-label { color: var(--warning-ink); }
+  .prop-card.status-broken .prop-detail-label { color: var(--danger-ink); }
+  .prop-detail-body { color: var(--ink-soft); }
+
+  .compare-card { background: var(--ink); color: var(--cream); border-radius: 20px; padding: 26px 22px; margin: 16px 0; }
+  .compare-eyebrow { font-size: 10px; letter-spacing: 0.2em; color: var(--brand-soft); text-transform: uppercase; font-weight: 600; }
+  .compare-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; margin-top: 6px; letter-spacing: -0.015em; }
+  .compare-row { display: grid; grid-template-columns: 56px 1fr; gap: 14px; margin-top: 20px; align-items: center; }
+  .compare-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--muted-2); }
+  .compare-dots { display: flex; gap: 8px; flex-wrap: wrap; }
+  .compare-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; }
+  .compare-dot.healthy { background: var(--success); }
+  .compare-dot.needs-work { background: var(--warning); }
+  .compare-dot.broken { background: var(--danger); }
+  .compare-dot.healthy::after { content: '✓'; }
+  .compare-dot.needs-work::after { content: '!'; }
+  .compare-dot.broken::after { content: '✗'; }
+  .compare-row.after-row .compare-label { color: var(--brand-soft); }
+
+  .action-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 26px 22px; margin-top: 16px; }
+  .action-eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .action-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-top: 6px; letter-spacing: -0.015em; }
+  .action-sub { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  .action-list { list-style: none; margin-top: 18px; }
+  .action-item { display: grid; grid-template-columns: 28px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+  .action-item:last-child { border-bottom: none; }
+  .action-num { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; color: var(--brand); line-height: 1; padding-top: 2px; }
+  .action-text { font-size: 14px; color: var(--ink); line-height: 1.5; }
+  .action-text .who { color: var(--muted); font-size: 12px; margin-top: 4px; display: block; }
+
+  /* ─── PROCESS MAP ─── */
+  .map-overview { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 18px; margin-bottom: 22px; }
+  .map-overview-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .map-overview-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; }
+  .map-overview-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .map-legends { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; background: var(--line-soft); border-radius: 10px; margin-bottom: 14px; }
+  .map-legend-row { display: flex; gap: 12px; flex-wrap: wrap; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; font-weight: 600; align-items: center; }
+  .map-legend-row .label { color: var(--ink-soft); font-weight: 700; margin-right: 4px; }
+  .map-legend-item { display: flex; align-items: center; gap: 5px; }
+  .map-legend-tag { padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+  .map-legend-tag.d { background: var(--type-d-soft); color: var(--type-d); }
+  .map-legend-tag.c { background: var(--type-c-soft); color: var(--type-c); }
+  .map-legend-tag.a { background: var(--type-a-soft); color: var(--type-a); }
+  .map-legend-tag.h { background: var(--type-h-soft); color: var(--type-h); }
+  .lane-swatch { width: 10px; height: 10px; border-radius: 3px; }
+  .lane-swatch.system { background: var(--lane-system); }
+  .lane-swatch.ai { background: var(--lane-ai); }
+  .lane-swatch.human { background: var(--lane-human); }
+
+  .map-flow { display: flex; flex-direction: column; gap: 0; }
+  .map-node { background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .15s; display: grid; grid-template-columns: 24px 1fr auto auto auto; gap: 8px; align-items: center; }
+  .map-node:hover { transform: translateY(-1px); border-color: var(--muted-2); }
+  .map-node.healthy { border-color: var(--success); background: linear-gradient(to right, var(--success-soft) 0%, var(--paper) 35%); }
+  .map-node.needs-work { border-color: var(--warning); background: linear-gradient(to right, var(--warning-soft) 0%, var(--paper) 35%); }
+  .map-node.broken { border-color: var(--danger); background: linear-gradient(to right, var(--danger-soft) 0%, var(--paper) 35%); }
+  .map-node-num { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 700; color: var(--muted); }
+  .map-node-name { font-weight: 600; font-size: 13px; letter-spacing: -0.005em; }
+  .type-pill { font-size: 9px; font-weight: 700; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.04em; }
+  .type-pill.d { background: var(--type-d-soft); color: var(--type-d); }
+  .type-pill.c { background: var(--type-c-soft); color: var(--type-c); }
+  .type-pill.a { background: var(--type-a-soft); color: var(--type-a); }
+  .type-pill.h { background: var(--type-h-soft); color: var(--type-h); }
+  .lane-pill { font-size: 9px; font-weight: 700; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.04em; }
+  .lane-pill.system { background: var(--lane-system-soft); color: var(--lane-system); }
+  .lane-pill.ai { background: var(--lane-ai-soft); color: var(--lane-ai); }
+  .lane-pill.human { background: var(--lane-human-soft); color: var(--lane-human); }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .status-dot.healthy { background: var(--success); }
+  .status-dot.needs-work { background: var(--warning); }
+  .status-dot.broken { background: var(--danger); }
+
+  .map-edge { display: flex; flex-direction: column; align-items: center; padding: 4px 0; cursor: pointer; }
+  .map-edge-line { width: 2px; height: 12px; background: var(--muted-2); }
+  .map-edge-line.healthy { background: var(--success); }
+  .map-edge-line.needs-work { background: var(--warning); }
+  .map-edge-line.broken { background: var(--danger); }
+  .map-edge-label { font-size: 9px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; font-weight: 600; padding: 1px 6px; background: var(--paper); border: 1px solid var(--line); border-radius: 100px; margin: 2px 0; }
+
+  .branch-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0 8px; padding: 0 4px; }
+  .branch-divider .line { flex: 1; height: 1px; background: var(--line); }
+  .branch-divider .label { font-size: 10px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; font-weight: 700; }
+
+  /* ─── RECOMMENDATIONS CARD ─── */
+  .recs-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 24px 22px; margin-bottom: 22px; }
+  .recs-eyebrow { font-size: 11px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .recs-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; margin-top: 4px; letter-spacing: -0.015em; }
+  .recs-sub { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .recs-list { list-style: none; margin-top: 18px; display: grid; gap: 0; }
+  .rec-item { display: grid; grid-template-columns: 84px 1fr; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); align-items: flex-start; }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-priority { font-size: 9px; font-weight: 700; letter-spacing: 0.13em; padding: 4px 8px; border-radius: 100px; text-transform: uppercase; text-align: center; justify-self: start; white-space: nowrap; }
+  .rec-priority.critical { background: var(--danger-soft); color: var(--danger-ink); }
+  .rec-priority.high { background: var(--warning-soft); color: var(--warning-ink); }
+  .rec-priority.medium { background: var(--brand-soft); color: var(--brand-ink); }
+  .rec-priority.opt { background: var(--line-soft); color: var(--muted); }
+  .rec-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+  .rec-meta { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .rec-link { color: var(--brand); text-decoration: none; font-weight: 600; cursor: pointer; }
+  .rec-link:hover { text-decoration: underline; }
+  .rec-impact { font-size: 13px; color: var(--ink-soft); margin-top: 6px; line-height: 1.5; }
+  .rec-impact::before { content: '→ '; color: var(--brand); font-weight: 700; }
+
+  /* ─── CROSS-CUTTING CARDS ─── */
+  .cross-card { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px 20px; margin-bottom: 12px; position: relative; }
+  .cross-card::before { content: ''; position: absolute; top: 0; left: 24px; right: 24px; height: 3px; background: var(--brand); border-radius: 0 0 3px 3px; }
+  .cross-eyebrow { font-size: 10px; letter-spacing: 0.18em; color: var(--brand); text-transform: uppercase; font-weight: 700; }
+  .cross-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; letter-spacing: -0.015em; margin-top: 4px; }
+  .cross-sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .cross-content { margin-top: 14px; }
+
+  .state-flow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+  .state-chip { font-size: 11px; font-weight: 600; padding: 6px 11px; border-radius: 100px; background: var(--line-soft); color: var(--ink-soft); border: 1px solid var(--line); white-space: nowrap; }
+  .state-chip.terminal { background: var(--success-soft); color: var(--success-ink); border-color: var(--success); }
+  .state-chip.error { background: var(--danger-soft); color: var(--danger-ink); border-color: var(--danger); }
+  .state-arrow { color: var(--muted-2); font-size: 12px; font-weight: 700; }
+
+  /* ─── DETAIL CARDS ─── */
+  .detail-card { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px; margin-bottom: 12px; scroll-margin-top: 80px; }
+  .detail-card.healthy { border-left: 4px solid var(--success); }
+  .detail-card.needs-work { border-left: 4px solid var(--warning); }
+  .detail-card.broken { border-left: 4px solid var(--danger); }
+
+  .detail-card-top { display: grid; grid-template-columns: 32px 1fr auto; gap: 12px; align-items: flex-start; }
+  .detail-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; line-height: 1; padding-top: 2px; }
+  .detail-card.healthy .detail-num { color: var(--success-ink); }
+  .detail-card.needs-work .detail-num { color: var(--warning-ink); }
+  .detail-card.broken .detail-num { color: var(--danger-ink); }
+  .detail-name { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; letter-spacing: -0.015em; }
+  .detail-meta-line { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+
+  .detail-plain { font-size: 14px; color: var(--ink-soft); margin-top: 14px; line-height: 1.55; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .detail-plain-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block; }
+
+  .io-block { margin-top: 14px; padding: 12px 14px; background: var(--line-soft); border-radius: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .io-col { font-size: 12px; }
+  .io-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .io-val { color: var(--ink-soft); font-weight: 500; }
+
+  .detail-table { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; gap: 8px; }
+  .detail-table-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
+  .detail-row { display: grid; grid-template-columns: 120px 1fr; gap: 12px; font-size: 13px; }
+  .detail-row-label { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; }
+  .detail-row-val { color: var(--ink-soft); }
+
+  .quality-row { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .quality-row-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .quality-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .quality-chip { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+  .quality-chip.pass { background: var(--success-soft); color: var(--success-ink); }
+  .quality-chip.fail { background: var(--danger-soft); color: var(--danger-ink); }
+  .quality-chip.na { background: var(--line-soft); color: var(--muted); }
+  .quality-chip-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .quality-chip.pass .quality-chip-dot { background: var(--success); }
+  .quality-chip.fail .quality-chip-dot { background: var(--danger); }
+  .quality-chip.na .quality-chip-dot { background: var(--muted-2); }
+
+  .fix-block { margin-top: 14px; padding: 12px 14px; background: var(--warning-soft); border-radius: 12px; }
+  .fix-block.broken { background: var(--danger-soft); }
+  .fix-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; color: var(--warning-ink); }
+  .fix-block.broken .fix-eyebrow { color: var(--danger-ink); }
+  .fix-text { font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+
+  .model-block { margin-top: 14px; padding: 14px; background: var(--type-c-soft); border-radius: 12px; border-left: 3px solid var(--type-c); }
+  .model-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--type-c); }
+  .model-name { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .model-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+
+  /* ─── PROMPTS SECTION ─── */
+  .prompts-section { margin-top: 14px; padding: 14px; background: var(--type-c-soft); border-radius: 12px; border-left: 3px solid var(--type-c); }
+  .prompts-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; color: var(--type-c); }
+  .prompts-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); margin-bottom: 10px; }
+  .prompt-details { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; overflow: hidden; }
+  .prompt-details:last-child { margin-bottom: 0; }
+  .prompt-summary { padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; list-style: none; gap: 8px; }
+  .prompt-summary::-webkit-details-marker { display: none; }
+  .prompt-summary::marker { display: none; }
+  .prompt-summary:hover { background: var(--line-soft); }
+  .prompt-summary-name { font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; }
+  .prompt-summary-name::before { content: '▸'; color: var(--muted-2); transition: transform .15s; display: inline-block; font-size: 10px; }
+  .prompt-details[open] .prompt-summary-name::before { transform: rotate(90deg); }
+  .prompt-summary-meta { font-size: 10px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+  .prompt-content { padding: 14px; border-top: 1px solid var(--line); background: #FCFAF5; font-family: var(--mono); font-size: 11.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; color: var(--ink-soft); max-height: 380px; overflow-y: auto; }
+
+  .candidacy-block { margin-top: 12px; padding: 12px 14px; background: var(--brand-soft); border-radius: 10px; border-left: 3px solid var(--brand); }
+  .candidacy-block.judgment { background: var(--type-h-soft); border-left-color: var(--type-h); }
+  .candidacy-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--brand-ink); }
+  .candidacy-block.judgment .candidacy-eyebrow { color: var(--type-h); }
+  .candidacy-status { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 4px; }
+  .candidacy-meter { height: 6px; background: rgba(15, 118, 110, 0.15); border-radius: 100px; margin: 8px 0 6px; overflow: hidden; position: relative; }
+  .candidacy-block.judgment .candidacy-meter { background: rgba(71, 85, 105, 0.15); }
+  .candidacy-meter-fill { height: 100%; background: var(--brand); border-radius: 100px; transition: width .3s; }
+  .candidacy-block.judgment .candidacy-meter-fill { background: var(--type-h); }
+  .candidacy-meter-fill.over { background: var(--success); }
+  .candidacy-meta { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .candidacy-recommendation { font-size: 12px; color: var(--ink-soft); margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(15, 118, 110, 0.25); }
+  .candidacy-block.judgment .candidacy-recommendation { border-top-color: rgba(71, 85, 105, 0.25); }
+  .candidacy-recommendation::before { content: '→ '; color: var(--brand); font-weight: 700; }
+  .candidacy-block.judgment .candidacy-recommendation::before { color: var(--type-h); }
+
+  .judgment-block { margin-top: 14px; padding: 14px; background: var(--type-h-soft); border-radius: 12px; border-left: 3px solid var(--type-h); }
+  .judgment-eyebrow { font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700; margin-bottom: 6px; color: var(--type-h); }
+  .judgment-question { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); font-style: italic; }
+  .judgment-meta { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+
+  .edge-card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px 18px; margin-bottom: 10px; scroll-margin-top: 80px; border-left: 3px solid var(--muted-2); }
+  .edge-card.healthy { border-left-color: var(--success); }
+  .edge-card.needs-work { border-left-color: var(--warning); }
+  .edge-card.broken { border-left-color: var(--danger); }
+  .edge-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 4px; flex-wrap: wrap; }
+  .edge-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .edge-name .arrow { color: var(--muted-2); margin: 0 4px; }
+  .edge-plain { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .footer { text-align: center; color: var(--muted-2); font-size: 11px; letter-spacing: 0.12em; margin-top: 36px; text-transform: uppercase; padding-bottom: 32px; }
+  .footer-brand { font-family: 'Fraunces', serif; text-transform: none; font-style: italic; letter-spacing: 0; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+  .view-hidden { display: none; }
+
+  @media (min-width: 600px) {
+    body { padding: 32px 28px 80px; }
+    h1 { font-size: 48px; }
+    .grade-circle { width: 130px; height: 130px; }
+    .grade-letter { font-size: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wordmark">Agent<span>Twin</span></div>
+  <div class="version-pill">v4 · Sample · Recall Outreach</div>
+</div>
+
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-summary">Summary</button>
+  <button class="view-tab" id="tab-map">Process Map</button>
+</div>
+
+<!-- ═══════════════════════ SUMMARY ═══════════════════════ -->
+<div id="view-summary">
+  <div class="headline">
+    <div class="eyebrow">AI Agent Health Check</div>
+    <h1>Is your AI agent <span class="accent">ready</span> for real patients?</h1>
+    <div class="subhead">Every AI agent needs 5 things to work safely. We check all 5. Here's what we found.</div>
+  </div>
+  <div class="toggle-wrap" role="group">
+    <button class="toggle-btn active" id="btn-before">Right now</button>
+    <button class="toggle-btn after-active" id="btn-after">After the fix</button>
+  </div>
+  <div class="grade-card" id="grade-card">
+    <div class="grade-card-inner">
+      <div class="agent-meta">Agent · Recall Outreach AI</div>
+      <div class="agent-name serif">Texts and emails patients due for their annual exam.</div>
+      <div class="grade-row">
+        <div class="grade-circle" id="grade-circle">
+          <div class="grade-letter serif" id="grade-letter">C</div>
+          <div class="grade-label" id="grade-label">Health</div>
+        </div>
+        <div class="verdict-text">
+          <div class="verdict-headline serif" id="verdict-headline">Needs work before launch.</div>
+          <div class="verdict-sub" id="verdict-sub">2 things are missing. 1 is shaky. The other 2 are solid.</div>
+          <div class="verdict-counts" id="verdict-counts">
+            <span class="count-pill healthy"><span class="count-dot"></span>2 healthy</span>
+            <span class="count-pill needs-work"><span class="count-dot"></span>1 needs work</span>
+            <span class="count-pill broken"><span class="count-dot"></span>2 broken</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-heading">
+    <div class="section-title serif">The 5 things every AI agent needs</div>
+    <div class="section-sub">In plain English. With the actual fix if it's broken.</div>
+  </div>
+
+  <div id="props-wrap">
+    <div class="prop-card status-healthy"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success-ink);"><path d="M12 2L4 6v6c0 5 3.5 9.5 8 10 4.5-0.5 8-5 8-10V6l-8-4z"/></svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">Stays in its lane</div><div class="prop-formal">Bounded</div></div><div class="status-badge healthy">Healthy</div></div><div class="prop-description">The agent can only do things from a short approved list. It can't make up new actions on its own.</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Doing</div><div class="prop-detail-body">Uses 3 pre-approved message templates only.</div></div></div></div></div></div>
+    <div class="prop-card status-broken"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger-ink);"><path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4V4z"/><path d="M4 20h16"/><path d="M8 8h8M8 12h6"/></svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">Checks its facts</div><div class="prop-formal">Grounded</div></div><div class="status-badge broken">Broken</div></div><div class="prop-description">When the agent says something, it should be looking it up first — not guessing from memory.</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Problem</div><div class="prop-detail-body">Sometimes texts patients old clinic hours that haven't been right in 6 months.</div></div><div class="prop-detail-item"><div class="prop-detail-label">Fix</div><div class="prop-detail-body">Pull current clinic hours from the live system every time it sends a message.</div></div></div></div></div></div>
+    <div class="prop-card status-needs-work"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--warning-ink);"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/></svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">Checks before doing</div><div class="prop-formal">Gated</div></div><div class="status-badge needs-work">Needs work</div></div><div class="prop-description">Before the agent does anything real, something should double-check the message and the recipient match.</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Problem</div><div class="prop-detail-body">Inputs are checked. Outputs aren't — wrong-patient messages have gone out twice.</div></div><div class="prop-detail-item"><div class="prop-detail-label">Fix</div><div class="prop-detail-body">Add an output check: confirm the name and phone in the message match the patient record.</div></div></div></div></div></div>
+    <div class="prop-card status-healthy"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success-ink);"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">Nothing is hidden</div><div class="prop-formal">Observed</div></div><div class="status-badge healthy">Healthy</div></div><div class="prop-description">We can see exactly what the agent did, when, and how confident it was. Every action leaves a trace.</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Doing</div><div class="prop-detail-body">Every send is logged with template, time, recipient, and patient response.</div></div></div></div></div></div>
+    <div class="prop-card status-broken"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger-ink);"><polygon points="6 3, 18 3, 21 6, 21 18, 18 21, 6 21, 3 18, 3 6"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">Has a stop button</div><div class="prop-formal">Governed</div></div><div class="status-badge broken">Broken</div></div><div class="prop-description">A real person should be in charge — and able to shut the agent down in one click if anything weird starts happening.</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Problem</div><div class="prop-detail-body">No named owner. No kill switch. If it starts misbehaving at 2 a.m., nobody can stop it.</div></div><div class="prop-detail-item"><div class="prop-detail-label">Fix</div><div class="prop-detail-body">Assign a daily owner (Bre rotates). Add a pause button in the dashboard.</div></div></div></div></div></div>
+  </div>
+
+  <div class="compare-card">
+    <div class="compare-eyebrow">The Twin</div>
+    <div class="compare-title">Same agent. Three fixes away from ready.</div>
+    <div class="compare-row"><div class="compare-label">Now</div><div class="compare-dots"><div class="compare-dot healthy"></div><div class="compare-dot broken"></div><div class="compare-dot needs-work"></div><div class="compare-dot healthy"></div><div class="compare-dot broken"></div></div></div>
+    <div class="compare-row after-row"><div class="compare-label">After</div><div class="compare-dots"><div class="compare-dot healthy"></div><div class="compare-dot healthy"></div><div class="compare-dot healthy"></div><div class="compare-dot healthy"></div><div class="compare-dot healthy"></div></div></div>
+  </div>
+
+  <div class="action-card">
+    <div class="action-eyebrow">Your Fix List</div>
+    <div class="action-title serif">Do these 3 things. Then re-check.</div>
+    <div class="action-sub">Each fix is small. Together they take the agent from C to ready.</div>
+    <ol class="action-list">
+      <li class="action-item"><div class="action-num serif">1</div><div class="action-text">Pull clinic hours from the live system on every send.<span class="who">Owner: Vince · Effort: ~2 hrs</span></div></li>
+      <li class="action-item"><div class="action-num serif">2</div><div class="action-text">Add an output check that confirms name + phone match the patient record.<span class="who">Owner: Vince · Effort: ~3 hrs</span></div></li>
+      <li class="action-item"><div class="action-num serif">3</div><div class="action-text">Assign a daily rotating owner and add a one-click pause button to the dashboard.<span class="who">Owner: Bre · Effort: same-day</span></div></li>
+    </ol>
+  </div>
+</div>
+
+<!-- ═══════════════════════ PROCESS MAP ═══════════════════════ -->
+<div id="view-map" class="view-hidden">
+
+  <div class="headline">
+    <div class="eyebrow">Process Map</div>
+    <h1>Every step. Every <span class="accent">connection</span>. Mapped.</h1>
+    <div class="subhead">8 steps, 7 connections, plus memory, state machine, and the prompts behind the cognitive node. Tap any step in the map to jump to its detail card.</div>
+  </div>
+
+  <!-- OVERVIEW MAP -->
+  <div class="map-overview">
+    <div class="map-overview-header">
+      <div>
+        <div class="map-overview-title serif">Flow at a glance</div>
+        <div class="map-overview-sub">8 steps · 7 connections · 2 broken · 1 shaky</div>
+      </div>
+    </div>
+    <div class="map-legends">
+      <div class="map-legend-row"><span class="label">Runtime</span>
+        <div class="map-legend-item"><span class="map-legend-tag d">D</span>Deterministic</div>
+        <div class="map-legend-item"><span class="map-legend-tag c">C</span>Cognitive</div>
+        <div class="map-legend-item"><span class="map-legend-tag a">A</span>Approval</div>
+        <div class="map-legend-item"><span class="map-legend-tag h">H</span>Human</div>
+      </div>
+      <div class="map-legend-row"><span class="label">Lane</span>
+        <div class="map-legend-item"><span class="lane-swatch system"></span>System</div>
+        <div class="map-legend-item"><span class="lane-swatch ai"></span>AI</div>
+        <div class="map-legend-item"><span class="lane-swatch human"></span>Human</div>
+      </div>
+    </div>
+    <div class="map-flow" id="map-flow">
+      <div class="map-node healthy" data-target="#node-1"><span class="map-node-num">1</span><span class="map-node-name">Daily trigger</span><span class="type-pill d">D</span><span class="lane-pill system">SYS</span><span class="status-dot healthy"></span></div>
+      <div class="map-edge" data-target="#edge-1"><div class="map-edge-line healthy"></div><div class="map-edge-label">sync</div><div class="map-edge-line healthy"></div></div>
+      <div class="map-node healthy" data-target="#node-2"><span class="map-node-num">2</span><span class="map-node-name">Pull eligible patients</span><span class="type-pill d">D</span><span class="lane-pill system">SYS</span><span class="status-dot healthy"></span></div>
+      <div class="map-edge" data-target="#edge-2"><div class="map-edge-line healthy"></div><div class="map-edge-label">sync</div><div class="map-edge-line healthy"></div></div>
+      <div class="map-node healthy" data-target="#node-3"><span class="map-node-num">3</span><span class="map-node-name">Filter ineligibles</span><span class="type-pill d">D</span><span class="lane-pill system">SYS</span><span class="status-dot healthy"></span></div>
+      <div class="map-edge" data-target="#edge-3"><div class="map-edge-line healthy"></div><div class="map-edge-label">queue</div><div class="map-edge-line healthy"></div></div>
+      <div class="map-node broken" data-target="#node-4"><span class="map-node-num">4</span><span class="map-node-name">Compose message</span><span class="type-pill c">C</span><span class="lane-pill ai">AI</span><span class="status-dot broken"></span></div>
+      <div class="map-edge" data-target="#edge-4"><div class="map-edge-line broken"></div><div class="map-edge-label">sync</div><div class="map-edge-line broken"></div></div>
+      <div class="map-node needs-work" data-target="#node-5"><span class="map-node-num">5</span><span class="map-node-name">Output gate</span><span class="type-pill a">A</span><span class="lane-pill system">SYS</span><span class="status-dot needs-work"></span></div>
+      <div class="map-edge" data-target="#edge-5"><div class="map-edge-line needs-work"></div><div class="map-edge-label">approved · async</div><div class="map-edge-line needs-work"></div></div>
+      <div class="map-node healthy" data-target="#node-6"><span class="map-node-num">6</span><span class="map-node-name">Send (SMS / email)</span><span class="type-pill d">D</span><span class="lane-pill system">SYS</span><span class="status-dot healthy"></span></div>
+      <div class="map-edge" data-target="#edge-6"><div class="map-edge-line healthy"></div><div class="map-edge-label">event</div><div class="map-edge-line healthy"></div></div>
+      <div class="map-node healthy" data-target="#node-7"><span class="map-node-num">7</span><span class="map-node-name">Log to audit trail</span><span class="type-pill d">D</span><span class="lane-pill system">SYS</span><span class="status-dot healthy"></span></div>
+      <div class="branch-divider"><div class="line"></div><div class="label">Refuse branch from step 5</div><div class="line"></div></div>
+      <div class="map-edge" data-target="#edge-7"><div class="map-edge-line needs-work"></div><div class="map-edge-label">refused · queue</div><div class="map-edge-line needs-work"></div></div>
+      <div class="map-node needs-work" data-target="#node-8"><span class="map-node-num">8</span><span class="map-node-name">Human review</span><span class="type-pill h">H</span><span class="lane-pill human">HUM</span><span class="status-dot needs-work"></span></div>
+    </div>
+  </div>
+
+  <!-- ─── RECOMMENDATIONS ─── -->
+  <div class="recs-card">
+    <div class="recs-eyebrow">Recommendations</div>
+    <div class="recs-title serif">7 actions, ranked by impact</div>
+    <div class="recs-sub">Pulled from every broken node, broken edge, and missing system property. Critical first.</div>
+    <ol class="recs-list">
+      <li class="rec-item">
+        <span class="rec-priority critical">Critical</span>
+        <div>
+          <div class="rec-title">Pull live clinic hours into Compose</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#node-4">Node 4 · Compose</a> · Grounded fail · Owner Vince · ~2 hrs</div>
+          <div class="rec-impact">Stops outdated info from reaching patients. Removes the root cause behind the C grade.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority critical">Critical</span>
+        <div>
+          <div class="rec-title">Assign owner + kill switch (governance)</div>
+          <div class="rec-meta">Affects <strong>Governed</strong> (cross-cutting) · Owner Bre · same-day</div>
+          <div class="rec-impact">Closes the largest incident-response gap. No agent ships without a kill switch.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority high">High</span>
+        <div>
+          <div class="rec-title">Add name + phone match check to Output Gate</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#node-5">Node 5 · Output gate</a> · Gated partial · Owner Vince · ~3 hrs</div>
+          <div class="rec-impact">Prevents wrong-patient sends — already happened twice in the last 60 days.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority high">High</span>
+        <div>
+          <div class="rec-title">Enforce schema on edge 4 → 5</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#edge-4">Edge 4 → 5</a> · No data contract · Owner Vince · ~1 hr</div>
+          <div class="rec-impact">Catches malformed payloads at the boundary so Node 5 can validate properly.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority medium">Medium</span>
+        <div>
+          <div class="rec-title">Add DLQ for edge 5 → 6 (approved send path)</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#edge-5">Edge 5 → 6</a> · No DLQ · Owner Vince · ~2 hrs</div>
+          <div class="rec-impact">Failed sends will no longer silently drop after 3 retries.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority medium">Medium</span>
+        <div>
+          <div class="rec-title">Add backup human reviewer for SLA coverage</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#node-8">Node 8</a> + <a class="rec-link" href="#edge-7">Edge 5 → 8</a> · SLA breaches · Owner Bre · same-day</div>
+          <div class="rec-impact">Angela rotates in during Bre's PTO. Eliminates last month's 4 SLA breaches.</div>
+        </div>
+      </li>
+      <li class="rec-item">
+        <span class="rec-priority opt">Optimization</span>
+        <div>
+          <div class="rec-title">Graduate Compose model to Claude Haiku 4.5</div>
+          <div class="rec-meta">Affects <a class="rec-link" href="#node-4">Node 4</a> · Model change candidate · Owner Vince · 14 more shadow days</div>
+          <div class="rec-impact">−68% cost and −40% latency at no quality regression. Defer until grounding fix lands.</div>
+        </div>
+      </li>
+    </ol>
+  </div>
+
+  <!-- ─── CROSS-CUTTING ─── -->
+  <div class="section-heading">
+    <div class="section-title serif">Cross-cutting</div>
+    <div class="section-sub">Things that span the whole flow: memory, state, governance.</div>
+  </div>
+
+  <div class="cross-card">
+    <div class="cross-eyebrow">Memory</div>
+    <div class="cross-title serif">What the agent stores, where, and for how long</div>
+    <div class="cross-sub">Per-run context lives in memory only. Persistent state is purpose-scoped. Audit log retained for HIPAA.</div>
+    <div class="cross-content">
+      <div class="detail-table">
+        <div class="detail-row"><div class="detail-row-label">Working memory</div><div class="detail-row-val">Patient context object passed through pipeline. Lives only for the duration of one run (~30s). Not persisted.</div></div>
+        <div class="detail-row"><div class="detail-row-label">Persistent state</div><div class="detail-row-val">Dedup key store (DynamoDB) — last 90 days of send history per patient to prevent re-messaging.</div></div>
+        <div class="detail-row"><div class="detail-row-label">Audit log</div><div class="detail-row-val">All send events + outcomes. 7-year retention (HIPAA). Encrypted at rest.</div></div>
+        <div class="detail-row"><div class="detail-row-label">Conversation memory</div><div class="detail-row-val">None — single-turn agent. No cross-run learning from patient responses (yet).</div></div>
+        <div class="detail-row"><div class="detail-row-label">Classification</div><div class="detail-row-val">PHI (patient identifiers + contact data). Confidential.</div></div>
+        <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince (technical) · Bre (operational)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cross-card">
+    <div class="cross-eyebrow">State machine</div>
+    <div class="cross-title serif">Every state the work passes through, with SLAs</div>
+    <div class="cross-sub">A run can only move between named states. Each has a max time before escalation.</div>
+    <div class="cross-content">
+      <div class="state-flow">
+        <span class="state-chip">Triggered</span><span class="state-arrow">→</span>
+        <span class="state-chip">Fetching</span><span class="state-arrow">→</span>
+        <span class="state-chip">Filtering</span><span class="state-arrow">→</span>
+        <span class="state-chip">Composing</span><span class="state-arrow">→</span>
+        <span class="state-chip">Gating</span><span class="state-arrow">→</span>
+        <span class="state-chip">Sending</span><span class="state-arrow">→</span>
+        <span class="state-chip terminal">Sent</span>
+      </div>
+      <div class="state-flow" style="margin-top: 8px;">
+        <span class="state-chip">Gating</span><span class="state-arrow">→</span>
+        <span class="state-chip">Human review</span><span class="state-arrow">→</span>
+        <span class="state-chip terminal">Sent (edited)</span><span style="font-size: 11px; color: var(--muted); margin: 0 4px;">or</span>
+        <span class="state-chip error">Dropped</span>
+      </div>
+      <div class="detail-table" style="margin-top: 18px;">
+        <div class="detail-table-eyebrow">SLA per state</div>
+        <div class="detail-row"><div class="detail-row-label">Composing</div><div class="detail-row-val">Max 60s, then escalate to retry queue</div></div>
+        <div class="detail-row"><div class="detail-row-label">Gating</div><div class="detail-row-val">Max 5s, then auto-route to refuse</div></div>
+        <div class="detail-row"><div class="detail-row-label">Sending</div><div class="detail-row-val">Max 30s, then DLQ + page on-call</div></div>
+        <div class="detail-row"><div class="detail-row-label">Human review</div><div class="detail-row-val">Max 4 business hours, then auto-drop with notification</div></div>
+        <div class="detail-row"><div class="detail-row-label">State storage</div><div class="detail-row-val">DynamoDB · run_state table, partition by run_id</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── NODE DETAIL CARDS ─── -->
+  <div class="section-heading">
+    <div class="section-title serif">Steps · 8 nodes</div>
+    <div class="section-sub">Each step has inputs, outputs, specs, quality, and (where it applies) model identity, prompts, or human-judgment details.</div>
+  </div>
+
+  <div class="detail-card healthy" id="node-1">
+    <div class="detail-card-top">
+      <div class="detail-num serif">1</div>
+      <div>
+        <div class="detail-name">Daily trigger</div>
+        <div class="detail-meta-line"><span class="type-pill d">D · Trigger</span><span class="lane-pill system">System</span><span class="status-badge healthy">Healthy</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Wakes up every morning at 8 a.m. and starts the recall job.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">— (clock-based)</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">JobStartEvent {date, run_id}</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">AWS EventBridge cron</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 1s</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">1 run / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.00 / run</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Page on-call if missed</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span><span class="quality-chip na"><span class="quality-chip-dot"></span>Grounded n/a</span></div></div>
+  </div>
+
+  <div class="detail-card healthy" id="node-2">
+    <div class="detail-card-top">
+      <div class="detail-num serif">2</div>
+      <div>
+        <div class="detail-name">Pull eligible patients</div>
+        <div class="detail-meta-line"><span class="type-pill d">D · Query</span><span class="lane-pill system">System</span><span class="status-badge healthy">Healthy</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Asks the EHR for everyone who hasn't had an exam in 11+ months.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">JobStartEvent</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">Patient[] (roster)</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">Lambda · RevolutionEHR API</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 8s p99</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~1,000 patients / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.04 / run</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Retry 3× exponential, then DLQ</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded</span></div></div>
+  </div>
+
+  <div class="detail-card healthy" id="node-3">
+    <div class="detail-card-top">
+      <div class="detail-num serif">3</div>
+      <div>
+        <div class="detail-name">Filter ineligibles</div>
+        <div class="detail-meta-line"><span class="type-pill d">D · Filter</span><span class="lane-pill system">System</span><span class="status-badge healthy">Healthy</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Removes patients who already have appointments, opted out, or moved away.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">Patient[] (roster)</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">Patient[] (eligible only)</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">Lambda · rule engine</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 3s</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~1,000 in → ~600 out</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.01 / run</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Fail-closed (drop record)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded</span></div></div>
+  </div>
+
+  <!-- NODE 4 — C node with model + prompts + candidacy -->
+  <div class="detail-card broken" id="node-4">
+    <div class="detail-card-top">
+      <div class="detail-num serif">4</div>
+      <div>
+        <div class="detail-name">Compose message</div>
+        <div class="detail-meta-line"><span class="type-pill c">C · Cognitive</span><span class="lane-pill ai">AI</span><span class="status-badge broken">Broken</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Picks one of 3 approved templates and personalizes it with patient name, clinic name, and clinic hours.</div>
+    <div class="io-block">
+      <div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">Patient + TemplateID + ClinicConfig</div></div>
+      <div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">ComposedMessage {body, confidence, refused?}</div></div>
+    </div>
+
+    <div class="model-block">
+      <div class="model-eyebrow">Model on run</div>
+      <div class="model-name">Claude Sonnet 4.6</div>
+      <div class="model-meta">via AWS Bedrock · claude-sonnet-4-6-20260301 · region us-east-1 · BAA verified · last changed 2026-03-15</div>
+    </div>
+
+    <!-- NEW: PROMPTS -->
+    <div class="prompts-section">
+      <div class="prompts-eyebrow">Prompts on run</div>
+      <div class="prompts-title">What this AI is actually being told</div>
+
+      <details class="prompt-details">
+        <summary class="prompt-summary"><span class="prompt-summary-name">System prompt</span><span class="prompt-summary-meta">412 tokens · v6</span></summary>
+        <pre class="prompt-content">ROLE
+You are the Recall Outreach Composer for Classic Vision Care. You compose a single recall message for a patient whose annual eye exam is 11+ months overdue.
+
+CONSTRAINTS — MUST
+- Use ONE of the 3 approved templates exactly as written: TEMPLATE_A (warm reminder), TEMPLATE_B (clinical), TEMPLATE_C (follow-up). Do not invent.
+- Personalize ONLY these slots: {first_name}, {last_visit_month}, {clinic_hours}, {booking_url}.
+- Pull clinic_hours from the live ClinicConfig.hours field passed in. If missing or stale &gt; 30 days, REFUSE with refusal_reason = "stale_clinic_hours".
+- Verify {first_name} matches the patient record. If mismatch, REFUSE with refusal_reason = "name_mismatch".
+- Return a confidence score (0.0–1.0) reflecting your certainty the message is correct and safe to send.
+- Match channel formatting: SMS ≤ 160 chars, email subject + body.
+
+CONSTRAINTS — MUST NOT
+- Invent or modify template text.
+- Add clinical recommendations, urgency claims, or pricing.
+- Reference other patients, family, or insurance details.
+- Include diagnostic information (Rx, prior conditions).
+
+OUTPUT (JSON only, no prose)
+{
+  "template_id": "A" | "B" | "C",
+  "body": string,
+  "channel": "sms" | "email",
+  "subject": string | null,
+  "confidence": float,
+  "refused": bool,
+  "refusal_reason": "stale_clinic_hours" | "name_mismatch" | "missing_data" | "low_confidence" | null
+}
+
+If confidence &lt; 0.8, set refused = true with refusal_reason = "low_confidence".</pre>
+      </details>
+
+      <details class="prompt-details">
+        <summary class="prompt-summary"><span class="prompt-summary-name">User prompt template</span><span class="prompt-summary-meta">per-call · ~280 tokens</span></summary>
+        <pre class="prompt-content">PATIENT
+- first_name: {patient.first_name}
+- last_visit_month: {patient.last_visit_month}
+- contact_preference: {patient.contact_pref}      // "sms" | "email"
+- last_interaction: {patient.last_interaction_summary}
+
+CLINIC
+- clinic_name: {clinic.name}
+- clinic_hours: {clinic.live_hours}                // from RevolutionEHR live, max 30d old
+- booking_url: {clinic.booking_url}
+- clinic_phone: {clinic.phone}
+
+TEMPLATES
+- TEMPLATE_A: "Hi {first_name}, it's been about a year since your last eye exam at {clinic_name}. We've got openings this week — book any time at {booking_url}. Our hours: {clinic_hours}."
+- TEMPLATE_B: "{first_name}, your annual eye exam is due. Annual exams catch early changes in your vision and overall eye health. Schedule at {booking_url} or call {clinic_phone}."
+- TEMPLATE_C: "Hi {first_name} — checking in. We noticed you haven't been in since {last_visit_month}. If now's a good time, grab a slot at {booking_url}. Hours: {clinic_hours}."
+
+Pick the most appropriate template and compose. Return JSON only.</pre>
+      </details>
+
+      <details class="prompt-details">
+        <summary class="prompt-summary"><span class="prompt-summary-name">Output schema (JSON)</span><span class="prompt-summary-meta">enforced by validator</span></summary>
+        <pre class="prompt-content">{
+  "$schema": "ComposedMessage v3",
+  "type": "object",
+  "required": ["template_id", "body", "channel", "confidence", "refused"],
+  "properties": {
+    "template_id": { "type": "string", "enum": ["A", "B", "C"] },
+    "body":        { "type": "string", "maxLength": 480 },
+    "channel":     { "type": "string", "enum": ["sms", "email"] },
+    "subject":     { "type": ["string", "null"], "maxLength": 80 },
+    "confidence":  { "type": "number", "minimum": 0, "maximum": 1 },
+    "refused":     { "type": "boolean" },
+    "refusal_reason": { "type": ["string", "null"],
+      "enum": ["stale_clinic_hours", "name_mismatch", "missing_data", "low_confidence", null] }
+  }
+}</pre>
+      </details>
+
+      <details class="prompt-details">
+        <summary class="prompt-summary"><span class="prompt-summary-name">One-shot example</span><span class="prompt-summary-meta">included for grounding</span></summary>
+        <pre class="prompt-content">EXAMPLE INPUT:
+{
+  "patient": { "first_name": "Maria", "last_visit_month": "Apr 2025", "contact_pref": "sms" },
+  "clinic":  { "name": "CVC Kennesaw", "live_hours": "Mon-Fri 9-6, Sat 9-2", "booking_url": "cvc.com/book", "phone": "(770) 555-0100" }
+}
+
+EXAMPLE OUTPUT:
+{
+  "template_id": "A",
+  "body": "Hi Maria, it's been about a year since your last eye exam at CVC Kennesaw. We've got openings this week — book any time at cvc.com/book. Our hours: Mon-Fri 9-6, Sat 9-2.",
+  "channel": "sms",
+  "subject": null,
+  "confidence": 0.94,
+  "refused": false,
+  "refusal_reason": null
+}</pre>
+      </details>
+    </div>
+
+    <div class="candidacy-block">
+      <div class="candidacy-eyebrow">Model change candidate</div>
+      <div class="candidacy-status">Eligible to migrate to Claude Haiku 4.5</div>
+      <div class="candidacy-meter"><div class="candidacy-meter-fill over" style="width: 96%;"></div></div>
+      <div class="candidacy-meta"><strong>Shadow agreement:</strong> 96% over 14 days (threshold ≥ 95%) · <strong>Cost delta:</strong> −68% per message · <strong>Latency delta:</strong> −40%</div>
+      <div class="candidacy-recommendation">Graduate to Haiku 4.5 after 14 more days of shadow at ≥ 95%. Owner: Vince. Watch for: confidence drift on edge cases (new patient, missing data).</div>
+    </div>
+
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 2s p99</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 messages / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.003 / message</div></div>
+      <div class="detail-row"><div class="detail-row-label">Confidence floor</div><div class="detail-row-val">0.8 (reversible-costly)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Refuse → routes to Node 8 (human review)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded</span><span class="quality-chip fail"><span class="quality-chip-dot"></span>Grounded</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span></div></div>
+    <div class="fix-block broken">
+      <div class="fix-eyebrow">What's wrong · How to fix</div>
+      <div class="fix-text">The clinic hours come from a stale config file, sometimes 6 months out of date. <strong>Fix:</strong> read clinic hours from the live RevolutionEHR field on every compose. Reject output if hours field is missing.</div>
+    </div>
+  </div>
+
+  <div class="detail-card needs-work" id="node-5">
+    <div class="detail-card-top">
+      <div class="detail-num serif">5</div>
+      <div>
+        <div class="detail-name">Output gate</div>
+        <div class="detail-meta-line"><span class="type-pill a">A · Approval</span><span class="lane-pill system">System</span><span class="status-badge needs-work">Needs work</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Checks the composed message before it goes out. Routes approved messages forward, refused ones to human review.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">ComposedMessage + Patient</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">ApprovedMessage | RefusedMessage</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">Lambda · validator</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 500ms</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 / day (≈ 580 approved, 20 refused)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.00 / check</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Fail-closed (route to refuse / human review)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded</span><span class="quality-chip fail"><span class="quality-chip-dot"></span>Gated · partial</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span></div></div>
+    <div class="fix-block"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">Validates schema and confidence, but doesn't verify the patient name + phone in the message body match the patient record. <strong>Fix:</strong> add a name/phone match check before approving.</div></div>
+  </div>
+
+  <div class="detail-card healthy" id="node-6">
+    <div class="detail-card-top">
+      <div class="detail-num serif">6</div>
+      <div>
+        <div class="detail-name">Send (SMS / email)</div>
+        <div class="detail-meta-line"><span class="type-pill d">D · Action</span><span class="lane-pill system">System</span><span class="status-badge healthy">Healthy</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Sends the approved message via Twilio (SMS) or SES (email). Idempotency key prevents double-send on retry.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">ApprovedMessage</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">SendConfirmation event</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">Lambda · Twilio / SES</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 2s p99</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~580 / day, max 50 / minute</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.0075 / send</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Retry 3× then DLQ + page</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Gated</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span></div></div>
+  </div>
+
+  <div class="detail-card healthy" id="node-7">
+    <div class="detail-card-top">
+      <div class="detail-num serif">7</div>
+      <div>
+        <div class="detail-name">Log to audit trail</div>
+        <div class="detail-meta-line"><span class="type-pill d">D · Sink</span><span class="lane-pill system">System</span><span class="status-badge healthy">Healthy</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>Records who got messaged, when, which template, and whether they responded.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">SendConfirmation event</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">— (terminal sink)</div></div></div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">CloudWatch + DynamoDB</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency</div><div class="detail-row-val">&lt; 1s</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 events / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$0.01 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Retry, fail-open</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Vince</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span></div></div>
+  </div>
+
+  <div class="detail-card needs-work" id="node-8">
+    <div class="detail-card-top">
+      <div class="detail-num serif">8</div>
+      <div>
+        <div class="detail-name">Human review</div>
+        <div class="detail-meta-line"><span class="type-pill h">H · Human</span><span class="lane-pill human">Human</span><span class="status-badge needs-work">Needs work</span></div>
+      </div>
+    </div>
+    <div class="detail-plain"><span class="detail-plain-eyebrow">What it does</span>For refused messages: a human decides whether to fix and send, or drop entirely.</div>
+    <div class="io-block"><div class="io-col"><div class="io-eyebrow">Input</div><div class="io-val">RefusedMessage + Patient + RefusalReason</div></div><div class="io-col"><div class="io-eyebrow">Output</div><div class="io-val">EditedMessage (→ send) | DropEvent</div></div></div>
+    <div class="judgment-block">
+      <div class="judgment-eyebrow">What's being judged</div>
+      <div class="judgment-question">"Is this refused message recoverable? If so, what does it need to say?"</div>
+      <div class="judgment-meta"><strong>Volume:</strong> ~20 / day · <strong>Time per decision:</strong> ~30s · <strong>Reviewer:</strong> Bre (rotating) · <strong>Inter-rater agreement:</strong> 92% (Bre vs Angela, sampled monthly)</div>
+    </div>
+    <div class="candidacy-block judgment">
+      <div class="candidacy-eyebrow">Automation candidacy</div>
+      <div class="candidacy-status">Not yet ready to graduate</div>
+      <div class="candidacy-meter"><div class="candidacy-meter-fill" style="width: 85%;"></div></div>
+      <div class="candidacy-meta"><strong>Shadow AI agreement:</strong> 85% over 90 days (threshold ≥ 95%) · <strong>Gap:</strong> AI struggles when refusal reason is ambiguous.</div>
+      <div class="candidacy-recommendation">Path to graduation: fix the Compose grounding issue upstream (Node 4) — that drops refuse volume and gives the AI cleaner training data. Re-check candidacy in 60 days.</div>
+    </div>
+    <div class="detail-table">
+      <div class="detail-table-eyebrow">Specs</div>
+      <div class="detail-row"><div class="detail-row-label">Runtime</div><div class="detail-row-val">Manual · Bre's review queue (Linear)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency / SLA</div><div class="detail-row-val">&lt; 4 business hours, else auto-drop</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~20 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Cost</div><div class="detail-row-val">~$2.50 / day (labor)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Failure mode</div><div class="detail-row-val">Timeout → auto-drop + notify owner</div></div>
+      <div class="detail-row"><div class="detail-row-label">Owner</div><div class="detail-row-val">Bre</div></div>
+    </div>
+    <div class="quality-row"><div class="quality-row-eyebrow">Quality tracking</div><div class="quality-chips"><span class="quality-chip pass"><span class="quality-chip-dot"></span>Observed</span><span class="quality-chip pass"><span class="quality-chip-dot"></span>Bounded · 2 outcomes</span><span class="quality-chip fail"><span class="quality-chip-dot"></span>Governed · SLA breaches</span></div></div>
+    <div class="fix-block"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">SLA breached 4× last month — reviews sat &gt; 4 hours during Bre's PTO. <strong>Fix:</strong> add a rotating backup reviewer (Angela) for coverage gaps.</div></div>
+  </div>
+
+  <!-- EDGES -->
+  <div class="section-heading">
+    <div class="section-title serif">Connections · 7 edges</div>
+    <div class="section-sub">How work moves between steps. Latency, volume, retry behavior, what kind of data flows.</div>
+  </div>
+
+  <div class="edge-card healthy" id="edge-1">
+    <div class="edge-header"><div class="edge-name">Step 1 <span class="arrow">→</span> Step 2</div><span class="status-badge healthy">Healthy</span></div>
+    <div class="edge-plain">Trigger fires the EHR query.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">Synchronous invoke</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 500ms p99</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">1 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">&lt; 0.1%</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">JobStartEvent (empty payload)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">EventBridge DLQ on 3 fails</div></div>
+    </div>
+  </div>
+
+  <div class="edge-card healthy" id="edge-2">
+    <div class="edge-header"><div class="edge-name">Step 2 <span class="arrow">→</span> Step 3</div><span class="status-badge healthy">Healthy</span></div>
+    <div class="edge-plain">Patient roster passed to the filter.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">Sync function chain</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 100ms</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~1,000 records / call</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">&lt; 0.05%</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">Patient[] (JSON, schema-validated)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">In-memory; failure pages on-call</div></div>
+    </div>
+  </div>
+
+  <div class="edge-card healthy" id="edge-3">
+    <div class="edge-header"><div class="edge-name">Step 3 <span class="arrow">→</span> Step 4</div><span class="status-badge healthy">Healthy</span></div>
+    <div class="edge-plain">Each eligible patient hands off to the AI composer through a queue.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">SQS queue (decouples burst)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 30s end-to-end</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 messages / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">&lt; 0.5%</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">PatientContext (JSON)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">3× retry → recall-compose-dlq</div></div>
+    </div>
+  </div>
+
+  <div class="edge-card broken" id="edge-4">
+    <div class="edge-header"><div class="edge-name">Step 4 <span class="arrow">→</span> Step 5</div><span class="status-badge broken">Broken</span></div>
+    <div class="edge-plain">Composed message passes to the output gate.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">Sync function chain</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 200ms</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">Unknown — no payload telemetry</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">Message + PatientRef — no schema enforced</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">None — fail-open</div></div>
+    </div>
+    <div class="fix-block broken"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">No schema enforced on the payload. <strong>Fix:</strong> define a strict ComposedMessage type with patient ID + name + phone + body, reject anything that doesn't match.</div></div>
+  </div>
+
+  <div class="edge-card needs-work" id="edge-5">
+    <div class="edge-header"><div class="edge-name">Step 5 <span class="arrow">→</span> Step 6 <span style="font-size: 10px; color: var(--muted); margin-left: 4px;">approved</span></div><span class="status-badge needs-work">Needs work</span></div>
+    <div class="edge-plain">Approved messages move from the gate to the send action.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">Async via SNS topic</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 5s p99</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~580 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">&lt; 0.2%</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">ApprovedMessage (JSON)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">3× retry; no DLQ defined</div></div>
+    </div>
+    <div class="fix-block"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">No DLQ — a failed send vanishes silently after 3 retries. <strong>Fix:</strong> add recall-send-dlq with daily review.</div></div>
+  </div>
+
+  <div class="edge-card healthy" id="edge-6">
+    <div class="edge-header"><div class="edge-name">Step 6 <span class="arrow">→</span> Step 7</div><span class="status-badge healthy">Healthy</span></div>
+    <div class="edge-plain">Send-confirmation event fires the audit log.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">EventBridge event</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 1s</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~600 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">&lt; 0.1%</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">SendEvent (schema-locked)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">Retry 5× → audit-log-dlq</div></div>
+    </div>
+  </div>
+
+  <div class="edge-card needs-work" id="edge-7">
+    <div class="edge-header"><div class="edge-name">Step 5 <span class="arrow">→</span> Step 8 <span style="font-size: 10px; color: var(--muted); margin-left: 4px;">refused</span></div><span class="status-badge needs-work">Needs work</span></div>
+    <div class="edge-plain">Refused messages route to Bre's review queue.</div>
+    <div class="detail-table">
+      <div class="detail-row"><div class="detail-row-label">Trigger type</div><div class="detail-row-val">Async queue (Linear)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Latency budget</div><div class="detail-row-val">&lt; 4 business hours</div></div>
+      <div class="detail-row"><div class="detail-row-label">Volume</div><div class="detail-row-val">~20 / day</div></div>
+      <div class="detail-row"><div class="detail-row-label">Baseline failure</div><div class="detail-row-val">~5% SLA breach (coverage gaps)</div></div>
+      <div class="detail-row"><div class="detail-row-label">Data contract</div><div class="detail-row-val">RefusedMessage + RefusalReason + Patient</div></div>
+      <div class="detail-row"><div class="detail-row-label">Retry / DLQ</div><div class="detail-row-val">SLA timeout → auto-drop + notify</div></div>
+    </div>
+    <div class="fix-block"><div class="fix-eyebrow">What's wrong · How to fix</div><div class="fix-text">SLA breached 4× last month during Bre's PTO. <strong>Fix:</strong> rotating backup reviewer (Angela).</div></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-brand">Built on the AAC v1.1 framework</div>
+  AgentTwin v4 · MyBCAT · Sample Report
+</div>
+
+<script>
+  const tabSummary = document.getElementById('tab-summary');
+  const tabMap = document.getElementById('tab-map');
+  const viewSummary = document.getElementById('view-summary');
+  const viewMap = document.getElementById('view-map');
+  function showSummary() { tabSummary.classList.add('active'); tabMap.classList.remove('active'); viewSummary.classList.remove('view-hidden'); viewMap.classList.add('view-hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function showMap() { tabMap.classList.add('active'); tabSummary.classList.remove('active'); viewMap.classList.remove('view-hidden'); viewSummary.classList.add('view-hidden'); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  tabSummary.addEventListener('click', showSummary);
+  tabMap.addEventListener('click', showMap);
+
+  const btnBefore = document.getElementById('btn-before');
+  const btnAfter = document.getElementById('btn-after');
+  const propsWrap = document.getElementById('props-wrap');
+  const card = document.getElementById('grade-card');
+  const circle = document.getElementById('grade-circle');
+  const letter = document.getElementById('grade-letter');
+  const headline = document.getElementById('verdict-headline');
+  const sub = document.getElementById('verdict-sub');
+  const counts = document.getElementById('verdict-counts');
+  const beforeHTML = propsWrap.innerHTML;
+  const afterCards = [
+    { title:'Stays in its lane', formal:'Bounded', desc:'Locked to 3 approved templates. No improvisation.', detail:'Live: 3 templates, code-enforced.' },
+    { title:'Checks its facts', formal:'Grounded', desc:'Pulls current clinic hours from the live system every single time.', detail:'Source: live EHR field, verified on each send.' },
+    { title:'Checks before doing', formal:'Gated', desc:'Every message is checked for name + phone match before it sends.', detail:'Output gate: 100% match required.' },
+    { title:'Nothing is hidden', formal:'Observed', desc:'Every send is logged with template, time, recipient, and response.', detail:'Audit trail: complete and queryable.' },
+    { title:'Has a stop button', formal:'Governed', desc:'Daily rotating owner. One-click pause from the dashboard.', detail:'Owner: Bre (rotating). Kill switch: live.' },
+  ];
+  const icons = [
+    `<path d="M12 2L4 6v6c0 5 3.5 9.5 8 10 4.5-0.5 8-5 8-10V6l-8-4z"/>`,
+    `<path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4V4z"/><path d="M4 20h16"/><path d="M8 8h8M8 12h6"/>`,
+    `<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 12l2 2 4-4"/>`,
+    `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>`,
+    `<polygon points="6 3, 18 3, 21 6, 21 18, 18 21, 6 21, 3 18, 3 6"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>`,
+  ];
+  function renderAfter() {
+    let html = '';
+    afterCards.forEach((c, i) => { html += `<div class="prop-card status-healthy"><div class="prop-card-top"><div class="icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color: var(--success-ink);">${icons[i]}</svg></div><div class="prop-content"><div class="prop-card-titles"><div><div class="prop-title serif">${c.title}</div><div class="prop-formal">${c.formal}</div></div><div class="status-badge healthy">Healthy</div></div><div class="prop-description">${c.desc}</div><div class="prop-detail-row"><div class="prop-detail-item"><div class="prop-detail-label">Doing</div><div class="prop-detail-body">${c.detail}</div></div></div></div></div></div>`; });
+    return html;
+  }
+  btnAfter.addEventListener('click', () => { btnAfter.classList.add('active'); btnBefore.classList.remove('active'); card.classList.add('is-after'); circle.classList.add('is-pass'); letter.textContent = 'A'; headline.textContent = 'Ready for real patients.'; sub.textContent = 'All 5 essentials in place. Cleared to launch.'; counts.innerHTML = '<span class="count-pill healthy"><span class="count-dot"></span>5 healthy</span>'; propsWrap.innerHTML = renderAfter(); });
+  btnBefore.addEventListener('click', () => { btnBefore.classList.add('active'); btnAfter.classList.remove('active'); card.classList.remove('is-after'); circle.classList.remove('is-pass'); letter.textContent = 'C'; headline.textContent = 'Needs work before launch.'; sub.textContent = '2 things are missing. 1 is shaky. The other 2 are solid.'; counts.innerHTML = '<span class="count-pill healthy"><span class="count-dot"></span>2 healthy</span><span class="count-pill needs-work"><span class="count-dot"></span>1 needs work</span><span class="count-pill broken"><span class="count-dot"></span>2 broken</span>'; propsWrap.innerHTML = beforeHTML; });
+
+  document.querySelectorAll('[data-target]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') return; // let anchor links handle themselves
+      const target = document.querySelector(el.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>
