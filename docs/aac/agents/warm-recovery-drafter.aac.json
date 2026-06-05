@@ -1,0 +1,31 @@
+{
+  "card_type": "agent",
+  "aac_card_version": "0.1",
+  "agent_id": "warm-recovery-drafter",
+  "purpose": "Create draft-only warm recovery review packets for human approval without sending messages or mutating CRM state.",
+  "allowed_workflows": ["warm-recovery-draft-only"],
+  "allowed_nodes": [
+    "warm-recovery-ingest-candidate",
+    "warm-recovery-classify-intent",
+    "warm-recovery-draft-followup"
+  ],
+  "tools": [
+    { "name": "approved_source_reader", "scope": "read approved source snapshots", "write": false },
+    { "name": "review_packet_writer", "scope": "write private review packet only", "write": true }
+  ],
+  "allowed_action_classes": ["read", "recommend", "draft"],
+  "forbidden_action_classes": ["write_crm", "send", "pay", "delete", "label", "escalate_without_human"],
+  "approval_required_actions": ["send_sms", "send_email", "crm_mutation", "sequence_enrollment", "lifecycle_stage_change"],
+  "memory_policy": "proposal_only",
+  "telemetry_required": true,
+  "kill_switch": "disable warm-recovery-drafter profile or remove review_packet_writer permission",
+  "owner": "Hermes/AAC builder",
+  "residue_accepter": "Ankit for pilot only",
+  "disciplines": {
+    "bounded": { "allowed_action_classes": ["read", "recommend", "draft"], "forbidden_action_classes": ["send", "write_crm", "pay", "delete"], "ai_selects_action_class": false },
+    "grounded": { "claims_must_cite_sources": true, "allowed_source_types": ["approved source snapshot", "run card"] },
+    "gated": { "tool_call_gate": "required", "external_write_gate": "human approval required", "escalation_gate": "required on low confidence" },
+    "observed": { "log_tool_calls": true, "log_costs": true, "log_refusals": true, "log_external_actions": true },
+    "governed": { "kill_switch": "disable warm-recovery-drafter profile or tool permission", "memory_write_policy": "proposal_only", "approval_owner": "Bre or named ops owner" }
+  }
+}

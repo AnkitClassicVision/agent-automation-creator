@@ -1,10 +1,10 @@
 # AAC — Agent Automation Creator
 
-**A process-first framework for AI-augmented workflow design.**
+**A process-first framework and operating package for AI-augmented workflow design.**
 
-Most failed AI projects design the AI first and try to fit a process around it. AAC reverses the order. Map the process correctly. Then assign the right runtime to each piece of work. Then apply closed-loop AI discipline only where AI is the runtime.
+Most failed AI projects design the AI first and try to fit a process around it. AAC reverses the order. Map the process correctly. Then assign the right runtime to each piece of work. Then apply closed-loop AI discipline at the node and agent-envelope level.
 
-The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. A specification.
+The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. A specification, an assessment instrument, and a CI-enforceable card model.
 
 ![Turn Any Process Into an Automated Workflow](docs/turn-any-process-into-a-workflow.png)
 
@@ -15,9 +15,13 @@ The result is workflows that are fast, reliable, observable, governed, and cost-
 | File | What it is | Who it's for |
 |---|---|---|
 | [`docs/AAC-v1.1.pdf`](docs/AAC-v1.1.pdf) | The full framework specification, 34 pages, 57-item rubric | Builders, operators, vendors, auditors |
+| [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) | Practice-layer addendum defining Workflow Box, Node, Agent Envelope, Run Card, and the effective-permission rule | Builders, reviewers, CI gate authors |
+| [`docs/aac/`](docs/aac/) | Example workflow, node, agent, registry, and run-card artifacts for GitHub enforcement | Teams making agent changes reviewable before merge |
+| [`schemas/aac-card.schema.json`](schemas/aac-card.schema.json) | Minimal workflow/node/agent card schema | Tooling and CI validators |
+| [`scripts/aac_gate.py`](scripts/aac_gate.py) | Dependency-free GitHub Actions validator for AAC cards and cross-references | Repos that want AAC as a required PR check |
 | [`docs/turn-any-process-into-a-workflow.png`](docs/turn-any-process-into-a-workflow.png) | One-page visual explainer: manual chaos vs automated workflow | Execs, clients, prospects |
 | [`docs/how-the-workflow-is-built.png`](docs/how-the-workflow-is-built.png) | Deeper visual: 12 primitives, 4 runtimes, 5 disciplines, reference flow | Builders, technical reviewers |
-| [`skills/agenttwin/`](skills/agenttwin/) | A drop-in AI assistant skill that runs the AAC rubric on any agent and produces a visual report | Anyone running AI agents |
+| [`skills/agenttwin/`](skills/agenttwin/) | A drop-in AI assistant skill that runs AAC/AgentTwin assessment on workflow, node, and agent-envelope health | Anyone running AI agents |
 | [`examples/example-recall-outreach.html`](examples/example-recall-outreach.html) | Fully-rendered sample AgentTwin report | Anyone evaluating the framework |
 
 ---
@@ -43,6 +47,32 @@ AAC has three layers. You build bottom-up. You cannot skip a layer.
 | **Governed** | Refusal is always available. Confidence thresholds explicit. Kill switches per action class. |
 
 If any of the five fails, the element runs as Assisted AI until fixed. No exceptions.
+
+---
+
+## Boundary model for agentic systems
+
+AAC does not certify "an agent" abstractly. It certifies a bounded system:
+
+1. **Workflow Box** — the business/process object moving from trigger to finish.
+2. **Node** — one bounded work element inside that workflow.
+3. **Agent Envelope** — the actor/runtime allowed to perform one or more nodes.
+4. **Run Card** — evidence from one execution.
+
+Core rule:
+
+> A node is the work. An agent is the performer. A workflow is the box. A run card is the proof.
+
+Before applying AAC or AgentTwin, declare the box being judged and the control topology: `unit`, `graph_directed`, `agent_directed_envelope`, or `hybrid`. If the box is undefined, the correct verdict is `FAIL: box undefined`.
+
+The five disciplines apply twice:
+
+- **At the node level** — every node declares runtime mode, max lane, gates, telemetry, refusal, and kill switch.
+- **At the agent-envelope level** — every actor declares tools, allowed action classes, forbidden action classes, memory policy, telemetry, owner, residue accepter, and kill switch.
+
+Effective permission is always the most restrictive intersection of workflow max lane, node max lane, agent envelope, tool permission, user approval, and runtime gate result. An agent never upgrades itself from draft to send.
+
+See [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) for the full practice-layer addendum.
 
 ---
 
@@ -82,7 +112,13 @@ The two worked examples (Parts VI and VII) show the framework applied end-to-end
 
 AAC is the framework. **AgentTwin is the instrument that runs it.**
 
-AgentTwin is a drop-in skill for AI assistants. Point it at any agent, automation, vendor pitch, or workflow spec. It walks the AAC v1.1 rubric, scores every element, and produces a two-view HTML report:
+AgentTwin is a drop-in skill for AI assistants. Point it at any agent, automation, vendor pitch, or workflow spec. It first identifies the **workflow box**, then assesses three layers:
+
+1. **Workflow health** — is the process graphable and governed end to end?
+2. **Node health** — does each node satisfy Bounded, Grounded, Gated, Observed, and Governed?
+3. **Agent-envelope health** — is the actor's tool and action authority safe across all nodes it can touch?
+
+It walks the AAC v1.1 rubric, scores every element, and produces a two-view HTML report:
 
 - **Summary view** — a 5th-grader-readable wellness report with a letter grade. For execs, clients, stakeholders.
 - **Process Map view** — operator-grade detail with model identity, expandable prompts, node and edge specs, ranked recommendations, memory and state machine views. For builders and auditors.
@@ -118,6 +154,39 @@ Expected output: an HTML file with grade **C**, 5 property cards (2 broken, 1 ne
 
 ---
 
+## GitHub Actions gate: cards before merge
+
+AAC can now be enforced at the repository boundary. The initial GitHub Actions gate validates deterministic card artifacts before agent/workflow changes merge.
+
+Required artifact shape:
+
+```text
+docs/aac/workflows/<workflow>.aac.json
+docs/aac/nodes/<workflow>/<node>.aac.json
+docs/aac/agents/<agent>.aac.json
+docs/aac/agent-registry.json
+docs/aac/run-card.schema.json
+```
+
+Run locally:
+
+```bash
+python3 scripts/aac_gate.py --all
+```
+
+The gate checks that:
+
+- every workflow declares a workflow box and control topology
+- every node has runtime mode, max lane, owner, gates, telemetry, hard-refuse classes, and all five disciplines
+- every agent envelope has allowed workflows/nodes, tools, action classes, memory policy, telemetry, owner, residue accepter, and kill switch
+- workflows, nodes, agents, and registry rows cross-reference each other correctly
+- node lanes do not exceed the workflow lane
+- run-card proof has a declared schema
+
+This does not replace AgentTwin or the 57-item rubric. It is the pre-merge structural gate: no card, no merge.
+
+---
+
 ## Direct downloads
 
 | Asset | Size | Link |
@@ -136,16 +205,21 @@ Or grab the whole repo as a zip from the Releases page (right side of the GitHub
 
 ### If you're evaluating an existing AI workflow
 
-1. Open `docs/AAC-v1.1.pdf` and jump to Part VIII (the 57-item rubric, page 28)
-2. Walk the rubric in order, scoring each item
-3. Or: install AgentTwin and let it do the walk for you, producing a visual report
+1. Declare the workflow box first: workflow, node, agent envelope, or run evidence
+2. Open `docs/AAC-v1.1.pdf` and jump to Part VIII (the 57-item rubric, page 28)
+3. Walk the rubric in order, scoring each item
+4. Or: install AgentTwin and let it do the walk for you, producing a visual report
+5. If the repo is under GitHub control, add or update the workflow/node/agent cards under `docs/aac/`
 
 ### If you're designing a new AI workflow
 
 1. Read Parts 0 through III of the PDF (frame, process mapping, runtime assignment, closed-loop AI)
-2. Complete the 16-section spec document (PDF Part IV)
-3. Walk the rubric (Part VIII) before handing to a builder
-4. Use AgentTwin to validate during build and after deploy
+2. Read the boundary addendum and declare the workflow box / control topology before writing prompts or code
+3. Complete the 16-section spec document (PDF Part IV)
+4. Create the workflow card, node cards, agent-envelope card, registry row, and run-card schema
+5. Walk the rubric (Part VIII) before handing to a builder
+6. Use AgentTwin to validate during build and after deploy
+7. Use the GitHub Actions gate as the hard pre-merge check
 
 ### If you're a vendor or partner being evaluated against AAC
 
@@ -165,17 +239,17 @@ This is one piece of a larger system. AAC and AgentTwin do not provide:
 
 - **Continuous evaluation.** For that, build a regression pipeline against a frozen dataset.
 - **Live production telemetry.** For that, instrument your agent with structured logging plus a dashboard.
-- **Pre-deployment quality gates.** For that, add an LLM-as-judge step that catches bad outputs before users see them.
+- **Runtime proof by themselves.** For that, collect run cards from real executions.
 
-A complete agent operations stack has four layers: snapshot diagnostic (AgentTwin), pre-deployment gate, continuous eval, live telemetry. AgentTwin is layer one. Build the rest separately.
+This repo now includes the first pre-merge quality gate: `scripts/aac_gate.py` plus `.github/workflows/aac-gate.yml`. A complete agent operations stack has five layers: AAC cards, snapshot diagnostic (AgentTwin), pre-merge/pre-deployment gate, continuous eval, live telemetry. AgentTwin is the diagnostic layer; the GitHub gate is the structural merge layer.
 
 ---
 
 ## Status
 
-**v1.1, May 2026.** Framework locked. AgentTwin v1.0.0 is at WIP status — graduates to canonical after three structurally different real-agent runs with operator confirmation.
+**v1.1, May 2026.** Framework locked. Boundary + Creation Addendum v0.1 is a practice-layer operating package, not a new framework version. AgentTwin v1.0.0 is at WIP status — graduates to canonical after three structurally different real-agent runs with operator confirmation.
 
-The framework is pinned. AgentTwin pulls from it. If AAC moves to v1.2, that is a deliberate re-snapshot, not auto-propagation.
+The framework is pinned. AgentTwin and the GitHub gate pull from it. If AAC moves to v1.2, that is a deliberate re-snapshot backed by real workflow evidence, not auto-propagation from this addendum.
 
 ---
 

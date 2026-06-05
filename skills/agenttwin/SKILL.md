@@ -5,7 +5,7 @@ description: Diagnose any AI agent, automation workflow, or proposed agent build
 
 # AgentTwin
 
-A diagnostic instrument for AI agent workflows. Locked at v1, May 2026. Built on AAC v1.1 (Agent Automation Creator, MyBCAT framework, locked 2026-05-14). Produces a standalone HTML report that works without any external dependencies.
+A diagnostic instrument for AI agent workflows. Locked at v1, May 2026. Built on AAC v1.1 (Agent Automation Creator, MyBCAT framework, locked 2026-05-14) plus the Boundary + Creation Addendum v0.1 practice-layer object model. Produces a standalone HTML report that works without any external dependencies.
 
 ## When to fire this skill
 
@@ -50,7 +50,7 @@ The report has two tabs:
 
 Follow these steps in order. Do not skip.
 
-### Step 1 — Identify the workflow
+### Step 1 — Identify the workflow box and control topology
 
 The user will provide one of:
 - A natural-language description ("we have an agent that texts patients...")
@@ -59,6 +59,16 @@ The user will provide one of:
 - A vendor pitch / proposal
 - An existing agent name in their system
 
+Before scoring, declare what object is being judged:
+
+- **Workflow Box** — the business/process object moving through the system
+- **Control Topology** — unit, graph-directed, agent-directed envelope, or hybrid
+- **Node set** — bounded work elements inside the workflow
+- **Agent Envelope set** — actors/runtimes allowed to perform one or more nodes
+- **Run evidence** — run cards or logs proving what happened, if available
+
+If the workflow box or topology is unclear, do not claim readiness. Return: `FAIL: box undefined` and list the missing fields. Continue the diagnostic only as a gap assessment.
+
 Read everything available. If a code or doc is referenced, fetch and read it. **Do not proceed with assumptions** — if essential information is missing, mark those fields as gaps and proceed (do not invent).
 
 ### Step 2 — Extract the AAC elements
@@ -66,17 +76,25 @@ Read everything available. If a code or doc is referenced, fetch and read it. **
 Walk the workflow and extract these structured elements. Use `assets/data-schema.md` for the full field list and types.
 
 **Per node:**
-- Number, name, runtime type (D/C/A/H), lane (system/AI/human), status
+- Number, name, runtime type (D/C/A/H), max lane, performer/agent envelope, status
 - Plain-English description (5th grader version)
 - Input class, output class
 - Runtime detail, latency budget, daily volume, cost budget, failure mode, named owner
-- Quality chips: which closed-loop properties apply, status of each
+- Quality chips: Bounded / Grounded / Gated / Observed / Governed status for that node
 - If C (cognitive): model name, version, provider, region, BAA status, last-changed date
 - If C: system prompt, user prompt template, output schema, one-shot example (all expandable)
 - If C: model-change candidacy (champion-challenger status, shadow agreement %, cost/latency delta, recommendation)
 - If H (human): what question is being judged, volume, time per decision, reviewer, inter-rater agreement
 - If H: automation candidacy (shadow AI agreement %, threshold, gap analysis, path to graduation)
 - If broken / needs work: fix block with severity + prescriptive text
+
+**Per agent envelope:**
+- Agent id, purpose, owner, residue accepter
+- Allowed workflows and nodes
+- Tools, reads, writes, autonomous actions, approval-required actions, forbidden actions
+- Memory policy and source policy
+- Quality chips: Bounded / Grounded / Gated / Observed / Governed status for the envelope
+- Kill switch and escalation path
 
 **Per edge:**
 - From → To, label (approved/refused/etc.), status

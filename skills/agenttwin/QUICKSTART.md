@@ -17,11 +17,15 @@ Paste this trigger paragraph into your `CLAUDE.md`:
 ```
 AgentTwin skill: when I ask to diagnose, audit, score, map, visualize, or
 "AgentTwin" an AI agent, automation workflow, vendor proposal, or agent spec,
-follow the skill at ~/.claude/skills/agenttwin/SKILL.md. Walk the workflow
-through the AAC v1.1 rubric (assets/rubric-aac-v1-1.md), build the JSON per
-assets/data-schema.md, render via assets/template.html (replace ONLY the
-agent-data JSON block), save to /mnt/user-data/outputs/agenttwin-{slug}-{date}.html,
-present. Do not invent missing data — gaps surface as gaps.
+follow the skill at ~/.claude/skills/agenttwin/SKILL.md. First identify the
+workflow box and control topology (unit / graph-directed / agent-directed
+envelope / hybrid). Assess workflow health, node health, and agent-envelope
+health against AAC v1.1 plus the Boundary + Creation Addendum v0.1. Walk the
+rubric (assets/rubric-aac-v1-1.md), build the JSON per assets/data-schema.md,
+render via assets/template.html (replace ONLY the agent-data JSON block), save to
+/mnt/user-data/outputs/agenttwin-{slug}-{date}.html, present. Do not invent
+missing data — gaps surface as gaps; if the box is undefined, report FAIL: box
+undefined.
 ```
 
 ## Test it
