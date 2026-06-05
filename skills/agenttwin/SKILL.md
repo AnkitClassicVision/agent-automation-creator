@@ -1,11 +1,11 @@
 ---
 name: agenttwin
-description: Diagnose any AI agent, automation workflow, or proposed agent build against the AAC v1.1 framework and produce a marketing-grade HTML wellness report (Summary view + Process Map view). Always use this skill when the user asks to evaluate, audit, score, diagnose, map, visualize, or "AgentTwin" an AI agent, automation, workflow, vendor proposal, agent spec, or agentic build. Trigger on phrases like "AgentTwin this", "run AgentTwin on", "is this agent ready", "what's broken in this workflow", "diagnose this automation", "map this agent", "show me the health of", "should we ship this agent", "before/after on this agent". Also use proactively when the user shares an agent spec / vendor pitch / workflow diagram / Lambda code / Step Function definition and asks any evaluative question. The output is a single self-contained HTML file with two tabs — a 5th-grader-readable Summary (letter grade, 5 plain-English property cards, before/after toggle, action plan) and an operator-grade Process Map (node + edge detail cards, model identity, prompts, automation candidacy, ranked recommendations, memory + state machine).
+description: Diagnose any AI agent, automation workflow, or proposed agent build against AAC 2.0 and produce a marketing-grade HTML wellness report (Summary view + Process Map view). Always use this skill when the user asks to evaluate, audit, score, diagnose, map, visualize, or "AgentTwin" an AI agent, automation, workflow, vendor proposal, agent spec, or agentic build. Trigger on phrases like "AgentTwin this", "run AgentTwin on", "is this agent ready", "what's broken in this workflow", "diagnose this automation", "map this agent", "show me the health of", "should we ship this agent", "before/after on this agent". Also use proactively when the user shares an agent spec / vendor pitch / workflow diagram / Lambda code / Step Function definition and asks any evaluative question. The output is a single self-contained HTML file with two tabs — a 5th-grader-readable Summary (letter grade, 5 plain-English property cards, before/after toggle, action plan) and an operator-grade Process Map (node + edge detail cards, model identity, prompts, automation candidacy, ranked recommendations, memory + state machine).
 ---
 
 # AgentTwin
 
-A diagnostic instrument for AI agent workflows. Locked at v1, May 2026. Built on AAC v1.1 (Agent Automation Creator, MyBCAT framework, locked 2026-05-14) plus the Boundary + Creation Addendum v0.1 practice-layer object model. Produces a standalone HTML report that works without any external dependencies.
+A diagnostic instrument for AI agent workflows. Locked at v1, May 2026. Built on AAC 2.0 (Agent Automation Creator, MyBCAT operating package, released 2026-06-05) with the v1.1 core rubric retained as the readiness reference. Produces a standalone HTML report that works without any external dependencies.
 
 ## When to fire this skill
 
@@ -108,9 +108,9 @@ Walk the workflow and extract these structured elements. Use `assets/data-schema
 - Memory: working / persistent / audit log / conversation / classification / owner
 - State machine: main flow states, branch states, SLA per state, storage location
 
-**Verdict (from AAC v1.1):**
+**Verdict (from AAC 2.0 + v1.1 core rubric):**
 - Score each of the 5 closed-loop properties (BOUNDED / GROUNDED / GATED / OBSERVED / GOVERNED)
-- Apply verdict logic from `assets/rubric-aac-v1-1.md`
+- Apply AAC 2.0 creation-gate logic first, then verdict logic from `assets/rubric-aac-v1-1.md`
 - Derive overall letter grade:
   - **A** = all 5 healthy
   - **B** = 4 healthy, 1 needs-work, no broken
@@ -144,8 +144,8 @@ Save the result to `/mnt/user-data/outputs/agenttwin-{slug}-{YYYY-MM-DD}.html` w
 2. Write a brief summary in chat: overall grade, top 3 findings, top 3 recommendations.
 3. Capture the run to OB_mybcat via `OB_mybcat:capture_thought` with:
    - Type: `decision` if user accepted the report; `observation` if exploratory
-   - Topics: `agenttwin`, `aac-v1-1`, `agent-diagnostic`, `{agent-slug}`
-   - Content: agent name + verdict grade + top recommendations + path to HTML output
+   - Topics: `agenttwin`, `aac-v2-0`, `aac-v1-1-core`, `agent-diagnostic`, `{agent-slug}`
+   - Content: agent name + approved lane + verdict grade + top recommendations + path to HTML output
 
 ## Failure modes
 
@@ -216,7 +216,7 @@ Read assets as needed — `data-schema.md` and `rubric-aac-v1-1.md` are essentia
 This skill is v1 (May 2026), locked from AgentTwin mockup v4. Update conditions:
 - Promote to v2 only after the skill has run on at least 3 structurally different real agents (e.g., Recall Outreach, After-Hours Intake, Rx Fax) AND the operator has confirmed each report was accurate and actionable.
 - Add new fields to the data schema only when a real run surfaces a missing element. Do not pre-emptively expand the schema based on speculation.
-- AAC v1.1 changes do not auto-propagate. If AAC graduates to v1.2, this skill's `rubric-aac-v1-1.md` stays pinned until intentional re-snapshot.
+- AAC changes do not auto-edit the pinned v1.1 rubric snapshot. Apply AAC 2.0 creation-gate logic from the repo/root instructions, and re-snapshot `rubric-aac-v1-1.md` only on an intentional AgentTwin skill version bump.
 
 ## Final reminder
 

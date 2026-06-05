@@ -1,6 +1,6 @@
 {
   "card_type": "node",
-  "aac_card_version": "0.1",
+  "aac_card_version": "2.0",
   "workflow": "warm-recovery-draft-only",
   "node_id": "warm-recovery-classify-intent",
   "runtime_mode": "C",
@@ -8,29 +8,85 @@
   "owner": "Hermes/AAC builder",
   "input_contract": {
     "schema": "candidate_intake_snapshot",
-    "required_fields": ["candidate_ref", "source_ids", "eligibility_flags"]
+    "required_fields": [
+      "candidate_ref",
+      "source_ids",
+      "eligibility_flags"
+    ]
   },
   "output_contract": {
     "schema": "intent_classification",
-    "allowed_labels": ["likely_warm_recovery", "needs_human_context", "refuse", "hard_refuse"],
+    "allowed_labels": [
+      "likely_warm_recovery",
+      "needs_human_context",
+      "refuse",
+      "hard_refuse"
+    ],
     "source_ids_required": true,
     "confidence_required": true
   },
   "data_classification": "PII / PHI-adjacent",
   "disciplines": {
-    "bounded": { "finite_action_vocabulary": ["likely_warm_recovery", "needs_human_context", "refuse", "hard_refuse"], "ai_selects_action_class": false },
-    "grounded": { "source_ids_required": true, "claims_must_reference_source_ids": true },
-    "gated": { "confidence_floor": 0.8, "input_gate_required": true, "output_gate_required": true, "cross_check_gate_required": true, "action_gate_required": true },
-    "observed": { "run_card_required": true, "metrics": ["confidence_distribution", "label_distribution", "refuse_rate", "validator_failure_rate"] },
-    "governed": { "refusal_available": true, "kill_switch": "disable C-node classifier", "model_prompt_version_required": true }
+    "bounded": {
+      "finite_action_vocabulary": [
+        "likely_warm_recovery",
+        "needs_human_context",
+        "refuse",
+        "hard_refuse"
+      ],
+      "ai_selects_action_class": false
+    },
+    "grounded": {
+      "source_ids_required": true,
+      "claims_must_reference_source_ids": true
+    },
+    "gated": {
+      "confidence_floor": 0.8,
+      "input_gate_required": true,
+      "output_gate_required": true,
+      "cross_check_gate_required": true,
+      "action_gate_required": true
+    },
+    "observed": {
+      "run_card_required": true,
+      "metrics": [
+        "confidence_distribution",
+        "label_distribution",
+        "refuse_rate",
+        "validator_failure_rate"
+      ]
+    },
+    "governed": {
+      "refusal_available": true,
+      "kill_switch": "disable C-node classifier",
+      "model_prompt_version_required": true
+    }
   },
   "gates": {
-    "input": { "rule": "Reject missing source_ids, missing eligibility flags, or hard-refuse flags." },
-    "output": { "rule": "Validate label enum, confidence, and source IDs." },
-    "cross_check": { "rule": "Deterministic hard-refuse classes override model label." },
-    "action": { "rule": "Recommendation only; cannot draft, write, send, or mutate records." }
+    "input": {
+      "rule": "Reject missing source_ids, missing eligibility flags, or hard-refuse flags."
+    },
+    "output": {
+      "rule": "Validate label enum, confidence, and source IDs."
+    },
+    "cross_check": {
+      "rule": "Deterministic hard-refuse classes override model label."
+    },
+    "action": {
+      "rule": "Recommendation only; cannot draft, write, send, or mutate records."
+    }
   },
-  "hard_refuse": ["missing consent", "unclear identity", "account mismatch", "PHI in unsafe channel", "confidence below 0.8"],
-  "telemetry": { "run_card_required": true, "model_version_required": true, "prompt_version_required": true },
+  "hard_refuse": [
+    "missing consent",
+    "unclear identity",
+    "account mismatch",
+    "PHI in unsafe channel",
+    "confidence below 0.8"
+  ],
+  "telemetry": {
+    "run_card_required": true,
+    "model_version_required": true,
+    "prompt_version_required": true
+  },
   "kill_switch": "disable C-node classifier"
 }

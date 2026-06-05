@@ -20,7 +20,7 @@ AgentTwin skill: when I ask to diagnose, audit, score, map, visualize, or
 follow the skill at ~/.claude/skills/agenttwin/SKILL.md. First identify the
 workflow box and control topology (unit / graph-directed / agent-directed
 envelope / hybrid). Assess workflow health, node health, and agent-envelope
-health against AAC v1.1 plus the Boundary + Creation Addendum v0.1. Walk the
+health against AAC 2.0, then walk the v1.1 core
 rubric (assets/rubric-aac-v1-1.md), build the JSON per assets/data-schema.md,
 render via assets/template.html (replace ONLY the agent-data JSON block), save to
 /mnt/user-data/outputs/agenttwin-{slug}-{date}.html, present. Do not invent

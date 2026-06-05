@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AAC Creation Gate v0.1.
+"""AAC Creation Gate v2.0.
 
 Deterministic CI gate for AAC card artifacts. It validates workflow, node,
 agent-envelope, registry, and run-card schema files without external packages.
@@ -7,7 +7,7 @@ agent-envelope, registry, and run-card schema files without external packages.
 The gate is intentionally conservative: it checks structure, required fields,
 object boundaries, cross-references, lane intersections, owners, hard-refuse
 paths, and kill switches. It does not replace AgentTwin or the full 57-item AAC
-rubric.
+rubric. Every FAIL must include a concrete remediation and passing example.
 """
 
 from __future__ import annotations
@@ -136,7 +136,7 @@ def require_fields(card: dict[str, Any], path: str, fields: list[str], findings:
                     "FAIL",
                     path,
                     f"missing required field '{field}'",
-                    f"Add '{field}' to the AAC card before merge.",
+                    f"Add '{field}' to the AAC card before merge. Passing example: set a non-empty value that proves the gate is reviewable.",
                 )
             )
 
@@ -160,7 +160,7 @@ def require_nested(card: dict[str, Any], path: str, parent: str, fields: tuple[s
                     "FAIL",
                     path,
                     f"missing '{parent}.{field}'",
-                    f"Add '{parent}.{field}' so the card is enforceable.",
+                    f"Add '{parent}.{field}' so the card is enforceable. Passing example: use a concrete named owner, cost, lane, source, gate, or sink value rather than 'TBD'.",
                 )
             )
 
@@ -182,6 +182,7 @@ def validate_workflow(card: dict[str, Any], path: str, findings: list[Finding]) 
             "workflow_box",
             "control_topology",
             "value_mode",
+            "cost_framing",
             "trigger",
             "finished_state",
             "max_lane",
@@ -190,23 +191,25 @@ def validate_workflow(card: dict[str, Any], path: str, findings: list[Finding]) 
             "hard_refuse",
             "observability",
             "residue",
+            "escalation_path",
         ],
         findings,
     )
     require_nested(card, path, "sinks", ("happy", "refuse", "hard_refuse"), findings)
-    require_nested(card, path, "owners", ("process_owner", "technical_owner", "residue_accepter"), findings)
+    require_nested(card, path, "owners", ("process_owner", "technical_owner", "reviewer", "residue_accepter"), findings)
+    require_nested(card, path, "cost_framing", ("cost_of_failure", "cost_of_inaction", "per_error_cost_band"), findings)
     if card.get("control_topology") not in {"unit", "graph_directed", "agent_directed_envelope", "hybrid"}:
         findings.append(
             Finding(
                 "FAIL",
                 path,
                 "control_topology must be unit, graph_directed, agent_directed_envelope, or hybrid",
-                "Declare the topology before AgentTwin or CI can score the workflow.",
+                "Declare the topology before AgentTwin or CI can score the workflow. Passing example: control_topology='graph_directed' for a fixed node DAG.",
             )
         )
     if card.get("value_mode") not in {"replace", "augment", "extend"}:
         findings.append(
-            Finding("FAIL", path, "value_mode must be replace, augment, or extend", "Set value_mode explicitly.")
+            Finding("FAIL", path, "value_mode must be replace, augment, or extend", "Set value_mode explicitly. Passing example: value_mode='augment' when AI drafts and a human approves.")
         )
 
 
@@ -395,7 +398,7 @@ def collect_cards(repo: Path, findings: list[Finding]) -> tuple[dict[str, tuple[
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate AAC card artifacts.")
+    parser = argparse.ArgumentParser(description="Validate AAC 2.0 card artifacts.")
     parser.add_argument("--repo", default=".", help="Repository root")
     parser.add_argument("--base", default=os.getenv("GITHUB_BASE_SHA"), help="Base SHA for changed-file detection")
     parser.add_argument("--head", default=os.getenv("GITHUB_SHA"), help="Head SHA for changed-file detection")
@@ -425,7 +428,7 @@ def main() -> int:
                 "FAIL",
                 "docs/aac/",
                 "AAC-relevant changes detected but no .aac.json cards exist",
-                "Add workflow, node, and agent cards under docs/aac/ before merge.",
+                "Add workflow, node, and agent cards under docs/aac/ before merge. Passing example: docs/aac/workflows/<workflow>.aac.json plus matching node and agent cards.",
             )
         )
 

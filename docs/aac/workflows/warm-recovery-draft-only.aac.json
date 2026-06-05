@@ -1,6 +1,6 @@
 {
   "card_type": "workflow",
-  "aac_card_version": "0.1",
+  "aac_card_version": "2.0",
   "workflow_id": "warm-recovery-draft-only",
   "workflow_box": "warm recovery candidate packet",
   "control_topology": "graph_directed",
@@ -37,11 +37,27 @@
   "observability": {
     "run_card_required": true,
     "review_cadence": "weekly during pilot",
-    "metrics": ["candidate_count", "refuse_rate", "validator_failure_rate", "confidence_distribution", "external_side_effect_count"]
+    "metrics": [
+      "candidate_count",
+      "refuse_rate",
+      "validator_failure_rate",
+      "confidence_distribution",
+      "external_side_effect_count"
+    ]
   },
   "residue": {
     "accepted_by": "Ankit for pilot only",
     "review_cadence": "weekly",
-    "known_residue": ["Public context may be stale", "Draft tone may require human editing", "Human reviewer remains responsible for any send decision"]
-  }
+    "known_residue": [
+      "Public context may be stale",
+      "Draft tone may require human editing",
+      "Human reviewer remains responsible for any send decision"
+    ]
+  },
+  "cost_framing": {
+    "cost_of_failure": "Eligible warm recovery candidates can sit unworked, delaying patient follow-up and creating manual rework for the ops reviewer.",
+    "cost_of_inaction": "Warm leads decay after roughly a week, increasing reseed effort and lowering booked-appointment conversion probability.",
+    "per_error_cost_band": "medium"
+  },
+  "escalation_path": "Low-confidence, consent, identity, PHI-channel, or account-match issues hard-refuse to the named reviewer before any external action."
 }

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/AnkitClassicVision/agent-automation-creator/docs/aac/run-card.schema.json",
-  "title": "AAC Run Card Schema v0.1",
-  "description": "Evidence from one execution of an AAC-governed workflow. Runtime-green claims require run-card proof.",
+  "title": "AAC Run Card Schema v2.0",
+  "description": "Evidence from one execution of an AAC 2.0-governed workflow. Runtime-green claims require run-card proof.",
   "type": "object",
   "required": [
     "run_card_version",
@@ -23,23 +23,60 @@
     "verdict"
   ],
   "properties": {
-    "run_card_version": { "type": "string", "minLength": 1 },
-    "run_id": { "type": "string", "minLength": 1 },
-    "workflow_id": { "type": "string", "minLength": 1 },
-    "agent_id": { "type": "string", "minLength": 1 },
-    "started_at": { "type": "string" },
-    "completed_at": { "type": "string" },
-    "node_path": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-    "inputs": { "type": "object" },
+    "run_card_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agent_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "completed_at": {
+      "type": "string"
+    },
+    "node_path": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string"
+      }
+    },
+    "inputs": {
+      "type": "object"
+    },
     "sources": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["source_id", "source_type", "reference"],
+        "required": [
+          "source_id",
+          "source_type",
+          "reference"
+        ],
         "properties": {
-          "source_id": { "type": "string", "minLength": 1 },
-          "source_type": { "type": "string", "minLength": 1 },
-          "reference": { "type": "string", "minLength": 1 }
+          "source_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "additionalProperties": true
       }
@@ -48,28 +85,84 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["node_id", "gate", "status"],
+        "required": [
+          "node_id",
+          "gate",
+          "status"
+        ],
         "properties": {
-          "node_id": { "type": "string", "minLength": 1 },
-          "gate": { "type": "string", "minLength": 1 },
-          "status": { "enum": ["pass", "fail", "blocked", "not_applicable"] },
-          "evidence": { "type": "string" }
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "fail",
+              "blocked",
+              "not_applicable"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          }
         },
         "additionalProperties": true
       }
     },
-    "actions_taken": { "type": "array", "items": { "type": "string" } },
-    "external_side_effects": { "type": "array", "items": { "type": "string" } },
-    "refusals": { "type": "array", "items": { "type": "string" } },
-    "human_approvals": { "type": "array", "items": { "type": "object" } },
-    "telemetry": { "type": "object" },
+    "actions_taken": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "external_side_effects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "refusals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "human_approvals": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "telemetry": {
+      "type": "object"
+    },
     "verdict": {
       "type": "object",
-      "required": ["status", "approved_lane"],
+      "required": [
+        "status",
+        "approved_lane"
+      ],
       "properties": {
-        "status": { "enum": ["pass", "fail", "blocked", "review_required"] },
-        "approved_lane": { "type": "string", "minLength": 1 },
-        "notes": { "type": "string" }
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "blocked",
+            "review_required"
+          ]
+        },
+        "approved_lane": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
       },
       "additionalProperties": true
     }

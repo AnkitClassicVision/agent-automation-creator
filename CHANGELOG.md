@@ -2,21 +2,29 @@
 
 ## AAC Framework
 
-### [Boundary + Creation Addendum v0.1] — 2026-06-05
+### [2.0] — 2026-06-05
 
-Practice-layer operating package. AAC v1.1 remains canonical; this is not AAC v1.2.
+Major release. AAC moves from a static readiness framework into a creation-time operating package for agentic workflows. The v1.1 core rubric remains intact, but creation/promotion/merge/scheduling now require a portable AAC packet and executable gates.
 
 **Added**
+- Canonical `docs/AAC-v2.0.md` operating package
 - Boundary model for applying AAC to agentic systems: Workflow Box, Node, Agent Envelope, Run Card
-- Mandatory box/topology declaration before creating, auditing, or certifying an agentic workflow
+- Mandatory box/topology declaration before creating, auditing, promoting, scheduling, or certifying an agentic workflow
+- Five executable AAC 2.0 creation gates with binary PASS/FAIL, remediation, and passing examples
+- Cost/value framing gate: cost of failure, cost of inaction, value mode, per-error cost band
+- Owner/residue/escalation gate: process owner, technical owner, reviewer, residue accepter, escalation path
+- Action authority/lane-limit gate: max lane, autonomous actions, approval-required actions, forbidden actions, hard-refuse classes, kill switch
 - Node-level and agent-envelope-level application of Bounded / Grounded / Gated / Observed / Governed
 - Effective permission rule: most restrictive intersection of workflow max lane, node max lane, agent envelope, tool permission, user approval, and runtime gate result
 - Builder/retrofit process for creating new agents or updating existing workflows into AAC compliance
-- GitHub Actions gate skeleton plus dependency-free validator for workflow, node, agent, registry, and run-card artifacts
+- GitHub Actions gate plus dependency-free validator for workflow, node, agent, registry, and run-card artifacts
 
-**Unchanged**
-- AAC v1.1 core primitives, 57-item rubric, D/C/A/H runtime modes, and five closed-loop disciplines
-- Framework version remains v1.1 until real workflow evidence justifies a deliberate re-snapshot
+**Unchanged from v1.1 core**
+- 12 canonical work element types
+- D / C / A / H runtime modes
+- 57-item readiness rubric
+- Five closed-loop AI disciplines
+- Refusal-first architecture
 
 ### [1.1] — 2026-05-14
 
