@@ -1,0 +1,18 @@
+{
+  "registry_version": "0.1",
+  "agents": [
+    {
+      "agent_id": "warm-recovery-drafter",
+      "purpose": "Draft-only warm recovery review packets for human approval.",
+      "status": "example",
+      "primary_owner": "Hermes/AAC builder",
+      "process_owner": "Bre or named ops owner",
+      "technical_owner": "Hermes/AAC builder",
+      "compliance_owner": "Ankit for pilot only",
+      "max_lane": "draft",
+      "kill_switch": "disable warm-recovery-drafter profile or remove review_packet_writer permission",
+      "last_reviewed": "2026-06-05",
+      "next_review": "pilot only / before production use"
+    }
+  ]
+}

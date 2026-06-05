@@ -1,0 +1,35 @@
+{
+  "card_type": "node",
+  "aac_card_version": "0.1",
+  "workflow": "warm-recovery-draft-only",
+  "node_id": "warm-recovery-draft-followup",
+  "runtime_mode": "C",
+  "max_lane": "draft",
+  "owner": "Hermes/AAC builder",
+  "input_contract": {
+    "schema": "intent_classification",
+    "required_fields": ["candidate_ref", "label", "confidence", "source_ids"]
+  },
+  "output_contract": {
+    "schema": "private_review_packet",
+    "required_fields": ["candidate_ref", "draft_text", "rationale", "source_ids", "approval_required", "external_actions_taken"],
+    "source_ids_required": true
+  },
+  "data_classification": "PII / PHI-adjacent",
+  "disciplines": {
+    "bounded": { "finite_action_vocabulary": ["create_private_review_packet", "refuse", "hard_refuse"], "ai_selects_action_class": false },
+    "grounded": { "source_ids_required": true, "draft_claims_must_reference_source_ids": true },
+    "gated": { "confidence_floor": 0.8, "input_gate_required": true, "output_gate_required": true, "cross_check_gate_required": true, "action_gate_required": true },
+    "observed": { "run_card_required": true, "metrics": ["draft_created_count", "refuse_rate", "validator_failure_rate", "external_side_effect_count"] },
+    "governed": { "refusal_available": true, "kill_switch": "disable draft generation", "approval_required_for_send": true }
+  },
+  "gates": {
+    "input": { "rule": "Only likely_warm_recovery labels above confidence threshold may proceed." },
+    "output": { "rule": "Validate schema, source IDs, approval_required=true, and external_actions_taken=[] before saving packet." },
+    "cross_check": { "rule": "Reject if draft implies unsupported facts or bypasses approval." },
+    "action": { "rule": "Draft-only. No SMS, email, CRM write, sequence enrollment, or lifecycle mutation." }
+  },
+  "hard_refuse": ["missing consent", "unclear identity", "account mismatch", "PHI in unsafe channel", "unsupported factual claim", "send/write requested"],
+  "telemetry": { "run_card_required": true, "external_side_effect_count_must_equal": 0, "review_packet_ref_required": true },
+  "kill_switch": "disable draft generation"
+}

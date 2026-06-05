@@ -1,0 +1,34 @@
+{
+  "card_type": "node",
+  "aac_card_version": "0.1",
+  "workflow": "warm-recovery-draft-only",
+  "node_id": "warm-recovery-ingest-candidate",
+  "runtime_mode": "D",
+  "max_lane": "read",
+  "owner": "Hermes/AAC builder",
+  "input_contract": {
+    "required_fields": ["candidate_ref", "source_system", "eligibility_snapshot_ref"],
+    "forbidden_fields": ["raw PHI", "raw message bodies unless explicitly approved"]
+  },
+  "output_contract": {
+    "schema": "candidate_intake_snapshot",
+    "required_fields": ["candidate_ref", "source_ids", "eligibility_flags", "refuse_flags"]
+  },
+  "data_classification": "PII / PHI-adjacent",
+  "disciplines": {
+    "bounded": { "finite_action_vocabulary": ["accept_for_review", "refuse", "hard_refuse"], "ai_selects_action_class": false },
+    "grounded": { "source_ids_required": true, "allowed_sources": ["approved source snapshots"] },
+    "gated": { "input_gate_required": true, "output_gate_required": true, "cross_check_gate_required": true, "action_gate_required": true },
+    "observed": { "run_card_required": true, "metrics": ["input_count", "refuse_count", "hard_refuse_count"] },
+    "governed": { "refusal_available": true, "confidence_thresholds_explicit": "not applicable to deterministic intake", "kill_switch": "disable workflow intake" }
+  },
+  "gates": {
+    "input": { "rule": "Reject missing candidate_ref, missing source_system, or unsafe raw PHI." },
+    "output": { "rule": "Require source_ids and explicit eligibility/refuse flags." },
+    "cross_check": { "rule": "Compare eligibility flags against hard-refuse classes." },
+    "action": { "rule": "Read-only; no external writes or sends allowed." }
+  },
+  "hard_refuse": ["missing consent", "unclear identity", "account mismatch", "PHI in unsafe channel"],
+  "telemetry": { "run_card_required": true, "external_side_effect_count_must_equal": 0 },
+  "kill_switch": "disable workflow intake"
+}

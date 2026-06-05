@@ -1,0 +1,57 @@
+name: AAC Creation Gate
+
+on:
+  pull_request:
+    paths:
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'GEMINI.md'
+      - '.codex/**'
+      - '.hermes/**'
+      - 'skills/**'
+      - 'optional-skills/**'
+      - 'docs/agents/**'
+      - 'docs/aac/**'
+      - 'docs/workflows/**'
+      - 'docs/specs/**'
+      - 'prompts/**'
+      - 'workflows/**'
+      - 'cron/**'
+      - 'plugins/**'
+      - 'tools/**'
+      - 'mcp/**'
+      - '.github/workflows/**'
+      - 'scripts/aac_gate.py'
+      - 'schemas/aac-card.schema.json'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/aac/**'
+      - 'scripts/aac_gate.py'
+      - 'schemas/aac-card.schema.json'
+      - '.github/workflows/aac-gate.yml'
+
+jobs:
+  aac-gate:
+    name: AAC Creation Gate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run AAC card validator
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 scripts/aac_gate.py --format github
+
+      - name: Validate all AAC cards on main
+        if: github.event_name == 'push'
+        run: |
+          python3 scripts/aac_gate.py --all --format github

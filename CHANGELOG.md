@@ -2,6 +2,22 @@
 
 ## AAC Framework
 
+### [Boundary + Creation Addendum v0.1] — 2026-06-05
+
+Practice-layer operating package. AAC v1.1 remains canonical; this is not AAC v1.2.
+
+**Added**
+- Boundary model for applying AAC to agentic systems: Workflow Box, Node, Agent Envelope, Run Card
+- Mandatory box/topology declaration before creating, auditing, or certifying an agentic workflow
+- Node-level and agent-envelope-level application of Bounded / Grounded / Gated / Observed / Governed
+- Effective permission rule: most restrictive intersection of workflow max lane, node max lane, agent envelope, tool permission, user approval, and runtime gate result
+- Builder/retrofit process for creating new agents or updating existing workflows into AAC compliance
+- GitHub Actions gate skeleton plus dependency-free validator for workflow, node, agent, registry, and run-card artifacts
+
+**Unchanged**
+- AAC v1.1 core primitives, 57-item rubric, D/C/A/H runtime modes, and five closed-loop disciplines
+- Framework version remains v1.1 until real workflow evidence justifies a deliberate re-snapshot
+
 ### [1.1] — 2026-05-14
 
 Pressure-tested release. Forked from v1.0 after applying the framework to the Rx fax → RevolutionEHR Augment workflow.

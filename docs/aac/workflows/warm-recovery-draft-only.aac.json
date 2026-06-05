@@ -1,0 +1,47 @@
+{
+  "card_type": "workflow",
+  "aac_card_version": "0.1",
+  "workflow_id": "warm-recovery-draft-only",
+  "workflow_box": "warm recovery candidate packet",
+  "control_topology": "graph_directed",
+  "value_mode": "augment",
+  "trigger": "A candidate record enters the review queue for possible warm recovery follow-up.",
+  "finished_state": "A private review packet and draft recommendation exists, or the candidate is refused/hard-refused with reason.",
+  "sinks": {
+    "happy": "private review packet ready for human review",
+    "refuse": "candidate held for missing context or low confidence",
+    "hard_refuse": "candidate blocked because consent, identity, PHI, or account-match safety failed"
+  },
+  "owners": {
+    "process_owner": "Bre or named ops owner",
+    "technical_owner": "Hermes/AAC builder",
+    "residue_accepter": "Ankit for pilot only",
+    "reviewer": "Bre or named reviewer"
+  },
+  "max_lane": "draft",
+  "nodes": [
+    "warm-recovery-ingest-candidate",
+    "warm-recovery-classify-intent",
+    "warm-recovery-draft-followup"
+  ],
+  "agents": [
+    "warm-recovery-drafter"
+  ],
+  "hard_refuse": [
+    "missing consent",
+    "unclear identity",
+    "account mismatch",
+    "PHI in unsafe channel",
+    "low confidence below threshold"
+  ],
+  "observability": {
+    "run_card_required": true,
+    "review_cadence": "weekly during pilot",
+    "metrics": ["candidate_count", "refuse_rate", "validator_failure_rate", "confidence_distribution", "external_side_effect_count"]
+  },
+  "residue": {
+    "accepted_by": "Ankit for pilot only",
+    "review_cadence": "weekly",
+    "known_residue": ["Public context may be stale", "Draft tone may require human editing", "Human reviewer remains responsible for any send decision"]
+  }
+}
