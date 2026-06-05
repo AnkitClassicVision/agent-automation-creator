@@ -12,11 +12,11 @@ The pointer is a short paragraph that tells the AI on that surface: "when the us
 AgentTwin skill: when the user asks to diagnose, audit, score, map, visualize, or
 "AgentTwin" an AI agent / automation workflow / vendor proposal / agent spec, follow
 the skill at: <path-to-skill>/SKILL.md. Read SKILL.md, then walk the user's workflow
-through the AAC v1.1 rubric (assets/rubric-aac-v1-1.md), build the JSON per
+through AAC 2.0 first, then the v1.1 core rubric (assets/rubric-aac-v1-1.md), build the JSON per
 assets/data-schema.md, render via assets/template.html (replace ONLY the agent-data
 JSON block), save to /mnt/user-data/outputs/agenttwin-{slug}-{date}.html, present.
 Capture the run to OB_mybcat as decision/observation with topics ['agenttwin',
-'aac-v1-1', 'agent-diagnostic', '{agent-slug}']. Do not invent missing data — gaps
+'aac-v2-0', 'aac-v1-1-core', 'agent-diagnostic', '{agent-slug}']. Do not invent missing data — gaps
 surface as gaps.
 ```
 
@@ -67,7 +67,7 @@ Add this shorter trigger paragraph to your preferences:
 
 ```
 AGENTTWIN: When I ask to diagnose, audit, score, map, or "AgentTwin" an AI agent
-or workflow, walk the AAC v1.1 rubric stored in OB_mybcat under topic 'aac-v1-1',
+or workflow, walk AAC 2.0 stored in OB_mybcat under topic 'aac-v2-0', then the v1.1 core rubric under topic 'aac-v1-1-core',
 extract elements per the AgentTwin data contract (properties × 5, process_map with
 nodes/edges/memory/state/recommendations, all conditional blocks for C and H nodes),
 produce the wellness-report HTML matching the v4 visual contract (locked May 16
@@ -122,6 +122,6 @@ After graduation, replace "v1 · WIP" version pill in template.html with "v1 · 
 
 ## Maintenance
 
-- **AAC v1.1 changes** → do NOT auto-propagate to this skill. The rubric reference is intentionally pinned at v1.1 (snapshotted in `assets/rubric-aac-v1-1.md`). If AAC graduates to v1.2, decide deliberately whether to re-snapshot or fork the skill.
+- **AAC changes** → apply AAC 2.0 creation-gate logic from the repo/root instructions, but do NOT auto-edit the pinned v1.1 rubric snapshot. Re-snapshot `assets/rubric-aac-v1-1.md` only on an intentional AgentTwin skill version bump.
 - **Visual template changes** → require operator approval. Modify `assets/template.html` only; the JS renderer reads its data from the same JSON contract regardless.
 - **Schema changes** → require a real-agent run that surfaced a missing field. Don't pre-emptively expand the schema. Add the new field to `assets/data-schema.md`, the JSON block in `assets/template.html`, and the corresponding render function in the embedded JS.

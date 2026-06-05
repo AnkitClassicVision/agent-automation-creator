@@ -1,8 +1,8 @@
 # AAC card artifacts
 
-These files are examples of the deterministic artifacts the GitHub Actions gate validates before agent/workflow changes merge.
+These files are examples of the deterministic artifacts the GitHub Actions gate validates before agent/workflow changes merge. AAC card versions are `2.0`.
 
-The card model follows `docs/AAC-boundary-creation-addendum-v0.1.md`:
+The card model follows canonical [`docs/AAC-v2.0.md`](../AAC-v2.0.md):
 
 - workflow card = the process box
 - node cards = bounded work elements

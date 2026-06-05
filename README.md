@@ -1,12 +1,27 @@
 # AAC — Agent Automation Creator
 
-**A process-first framework and operating package for AI-augmented workflow design.**
+**AAC 2.0: a process-first framework and creation-time operating package for AI-augmented workflows and agents.**
 
 Most failed AI projects design the AI first and try to fit a process around it. AAC reverses the order. Map the process correctly. Then assign the right runtime to each piece of work. Then apply closed-loop AI discipline at the node and agent-envelope level.
 
-The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. A specification, an assessment instrument, and a CI-enforceable card model.
+The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. AAC 2.0 is a specification, an assessment instrument, a creation gate, and a CI-enforceable card model.
 
 ![Turn Any Process Into an Automated Workflow](docs/turn-any-process-into-a-workflow.png)
+
+---
+
+## Why AAC is now 2.0
+
+The earlier update was labeled as a practice-layer addendum because the core v1.1 rubric did not change. That was too conservative once AAC started governing **agent creation**, not just workflow assessment.
+
+AAC 2.0 is justified because the contract changed:
+
+1. **Before build** — weak agent prompts/specs now fail at the front door.
+2. **Before merge** — workflow/node/agent cards are review artifacts, not optional notes.
+3. **Before runtime** — max lane, owner, residue, kill switch, and run-card proof are required before higher-blast-radius execution.
+4. **Across surfaces** — the same AAC packet can travel through Hermes, GitHub, Claude Code, Codex, Gemini, and manual chat.
+
+The v1.1 core remains intact. AAC 2.0 = **v1.1 core rubric + creation gates + boundary model + artifacts + enforcement**.
 
 ---
 
@@ -14,8 +29,9 @@ The result is workflows that are fast, reliable, observable, governed, and cost-
 
 | File | What it is | Who it's for |
 |---|---|---|
-| [`docs/AAC-v1.1.pdf`](docs/AAC-v1.1.pdf) | The full framework specification, 34 pages, 57-item rubric | Builders, operators, vendors, auditors |
-| [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) | Practice-layer addendum defining Workflow Box, Node, Agent Envelope, Run Card, and the effective-permission rule | Builders, reviewers, CI gate authors |
+| [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) | Canonical AAC 2.0 operating package: v1.1 core plus creation gates, boundary model, card artifacts, and enforcement | Builders, operators, vendors, auditors |
+| [`docs/AAC-v1.1.pdf`](docs/AAC-v1.1.pdf) | Core rubric reference snapshot, 34 pages, 57 items | Builders, operators, vendors, auditors |
+| [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) | Backward-compatible pointer to AAC v2.0 for older links | Existing readers |
 | [`docs/aac/`](docs/aac/) | Example workflow, node, agent, registry, and run-card artifacts for GitHub enforcement | Teams making agent changes reviewable before merge |
 | [`schemas/aac-card.schema.json`](schemas/aac-card.schema.json) | Minimal workflow/node/agent card schema | Tooling and CI validators |
 | [`scripts/aac_gate.py`](scripts/aac_gate.py) | Dependency-free GitHub Actions validator for AAC cards and cross-references | Repos that want AAC as a required PR check |
@@ -72,7 +88,7 @@ The five disciplines apply twice:
 
 Effective permission is always the most restrictive intersection of workflow max lane, node max lane, agent envelope, tool permission, user approval, and runtime gate result. An agent never upgrades itself from draft to send.
 
-See [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) for the full practice-layer addendum.
+See [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) for the canonical AAC 2.0 operating package.
 
 ---
 
@@ -92,11 +108,13 @@ The framework has been pressure-tested against two structurally different real w
 
 ---
 
-## Read the PDF first
+## Read AAC 2.0 first
 
-The PDF is the canonical spec. 34 pages, 8 parts, 4 appendices, the 57-item rubric. Everything else in this repo refers back to it.
+[`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) is now the canonical operating package. The v1.1 PDF remains the locked core rubric reference: 34 pages, 8 parts, 4 appendices, and the 57-item readiness checklist.
 
-[📄 Download AAC v1.1 (PDF)](docs/AAC-v1.1.pdf)
+[📄 Read AAC v2.0](docs/AAC-v2.0.md)
+
+[📄 Download AAC v1.1 core rubric reference (PDF)](docs/AAC-v1.1.pdf)
 
 The four parts that matter most:
 - **Part I — Process Mapping Discipline.** The 12 canonical work element types and the rules for composing them.
@@ -118,7 +136,7 @@ AgentTwin is a drop-in skill for AI assistants. Point it at any agent, automatio
 2. **Node health** — does each node satisfy Bounded, Grounded, Gated, Observed, and Governed?
 3. **Agent-envelope health** — is the actor's tool and action authority safe across all nodes it can touch?
 
-It walks the AAC v1.1 rubric, scores every element, and produces a two-view HTML report:
+It walks the AAC 2.0 packet plus the AAC v1.1 core rubric, scores every element, and produces a two-view HTML report:
 
 - **Summary view** — a 5th-grader-readable wellness report with a letter grade. For execs, clients, stakeholders.
 - **Process Map view** — operator-grade detail with model identity, expandable prompts, node and edge specs, ranked recommendations, memory and state machine views. For builders and auditors.
@@ -191,7 +209,8 @@ This does not replace AgentTwin or the 57-item rubric. It is the pre-merge struc
 
 | Asset | Size | Link |
 |---|---|---|
-| AAC v1.1 framework spec (PDF) | 250 KB | [docs/AAC-v1.1.pdf](docs/AAC-v1.1.pdf) |
+| AAC v2.0 operating package (Markdown) | -- | [docs/AAC-v2.0.md](docs/AAC-v2.0.md) |
+| AAC v1.1 core rubric reference (PDF) | 250 KB | [docs/AAC-v1.1.pdf](docs/AAC-v1.1.pdf) |
 | Workflow infographic (PNG) | 1.8 MB | [docs/turn-any-process-into-a-workflow.png](docs/turn-any-process-into-a-workflow.png) |
 | Operating logic infographic (PNG) | 1.6 MB | [docs/how-the-workflow-is-built.png](docs/how-the-workflow-is-built.png) |
 | AgentTwin skill bundle | 60 KB | [skills/agenttwin/](skills/agenttwin/) |
@@ -206,20 +225,20 @@ Or grab the whole repo as a zip from the Releases page (right side of the GitHub
 ### If you're evaluating an existing AI workflow
 
 1. Declare the workflow box first: workflow, node, agent envelope, or run evidence
-2. Open `docs/AAC-v1.1.pdf` and jump to Part VIII (the 57-item rubric, page 28)
+2. Open `docs/AAC-v2.0.md`, then use `docs/AAC-v1.1.pdf` Part VIII for the 57-item rubric
 3. Walk the rubric in order, scoring each item
 4. Or: install AgentTwin and let it do the walk for you, producing a visual report
 5. If the repo is under GitHub control, add or update the workflow/node/agent cards under `docs/aac/`
 
 ### If you're designing a new AI workflow
 
-1. Read Parts 0 through III of the PDF (frame, process mapping, runtime assignment, closed-loop AI)
-2. Read the boundary addendum and declare the workflow box / control topology before writing prompts or code
-3. Complete the 16-section spec document (PDF Part IV)
+1. Read `docs/AAC-v2.0.md` first
+2. Declare the workflow box, control topology, cost/value framing, owners, residue, lane limits, and hard-refuse classes before writing prompts or code
+3. Complete the 16-section spec document using the v1.1 PDF core rubric as reference
 4. Create the workflow card, node cards, agent-envelope card, registry row, and run-card schema
-5. Walk the rubric (Part VIII) before handing to a builder
-6. Use AgentTwin to validate during build and after deploy
-7. Use the GitHub Actions gate as the hard pre-merge check
+5. Run `python3 scripts/aac_gate.py --all` and fix every FAIL
+6. Walk the full rubric (PDF Part VIII) before handing to a builder
+7. Use AgentTwin to validate during build and after deploy
 
 ### If you're a vendor or partner being evaluated against AAC
 
@@ -247,9 +266,9 @@ This repo now includes the first pre-merge quality gate: `scripts/aac_gate.py` p
 
 ## Status
 
-**v1.1, May 2026.** Framework locked. Boundary + Creation Addendum v0.1 is a practice-layer operating package, not a new framework version. AgentTwin v1.0.0 is at WIP status — graduates to canonical after three structurally different real-agent runs with operator confirmation.
+**v2.0, June 2026.** AAC is now the canonical creation-time operating package: v1.1 core rubric plus boundary model, executable creation gates, card artifacts, GitHub/Hermes enforcement, and run-card proof expectations. AgentTwin v1.0.0 remains the diagnostic instrument.
 
-The framework is pinned. AgentTwin and the GitHub gate pull from it. If AAC moves to v1.2, that is a deliberate re-snapshot backed by real workflow evidence, not auto-propagation from this addendum.
+The v1.1 core primitives are still locked: 12 work-element types, D/C/A/H runtimes, five closed-loop disciplines, and the 57-item rubric. The 2.0 change is where AAC sits in the lifecycle: it now gates creation/promotion/merge/scheduling before weak agents become durable.
 
 ---
 
@@ -271,7 +290,7 @@ If you use this framework and find it useful, drop a note. If you find a gap, op
 
 Issues and pull requests welcome. Two contribution paths:
 
-1. **Framework gaps.** If you apply AAC to a real workflow and the rubric misses something, open an issue describing the workflow, the missing check, and the closed-loop property it relates to. Real-world precedent required; no speculative additions.
+1. **Framework gaps.** If you apply AAC to a real workflow and the rubric or creation gate misses something, open an issue describing the workflow, the missing check, the failed/unsafe behavior, and the closed-loop property it relates to. Real-world precedent required; no speculative additions.
 2. **AgentTwin surface installs.** If you wire AgentTwin into a new AI surface, send a PR adding the install pattern to `skills/agenttwin/INSTALL.md`.
 
-What's locked and not open to change: the five disciplines, the four runtimes, the three status levels (Healthy / Needs work / Broken), the color palette, the typography. Fork if you need different choices. Diluting the framework's calibration is not in scope.
+What's locked and not open to change without evidence: the five disciplines, the four runtimes, the three status levels (Healthy / Needs work / Broken), the color palette, the typography, and the AAC 2.0 rule that creation/promotion gates block on any FAIL. Fork if you need different choices. Diluting the framework's calibration is not in scope.

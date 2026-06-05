@@ -1,12 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/AnkitClassicVision/agent-automation-creator/schemas/aac-card.schema.json",
-  "title": "AAC Card Schema v0.1",
-  "description": "Minimal card contract for AAC workflow, node, and agent-envelope artifacts. GitHub Actions can validate these deterministic fields before merge.",
+  "title": "AAC Card Schema v2.0",
+  "description": "AAC 2.0 card contract for workflow, node, and agent-envelope artifacts. GitHub Actions can validate creation gates and deterministic fields before merge.",
   "oneOf": [
-    { "$ref": "#/$defs/workflow_card" },
-    { "$ref": "#/$defs/node_card" },
-    { "$ref": "#/$defs/agent_card" }
+    {
+      "$ref": "#/$defs/workflow_card"
+    },
+    {
+      "$ref": "#/$defs/node_card"
+    },
+    {
+      "$ref": "#/$defs/agent_card"
+    }
   ],
   "$defs": {
     "non_empty_string": {
@@ -16,28 +22,59 @@
     "non_empty_array": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/non_empty_string" }
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      }
     },
     "discipline_set": {
       "type": "object",
-      "required": ["bounded", "grounded", "gated", "observed", "governed"],
+      "required": [
+        "bounded",
+        "grounded",
+        "gated",
+        "observed",
+        "governed"
+      ],
       "properties": {
-        "bounded": { "type": "object" },
-        "grounded": { "type": "object" },
-        "gated": { "type": "object" },
-        "observed": { "type": "object" },
-        "governed": { "type": "object" }
+        "bounded": {
+          "type": "object"
+        },
+        "grounded": {
+          "type": "object"
+        },
+        "gated": {
+          "type": "object"
+        },
+        "observed": {
+          "type": "object"
+        },
+        "governed": {
+          "type": "object"
+        }
       },
       "additionalProperties": true
     },
     "owner_set": {
       "type": "object",
-      "required": ["process_owner", "technical_owner", "residue_accepter"],
+      "required": [
+        "process_owner",
+        "technical_owner",
+        "residue_accepter",
+        "reviewer"
+      ],
       "properties": {
-        "process_owner": { "$ref": "#/$defs/non_empty_string" },
-        "technical_owner": { "$ref": "#/$defs/non_empty_string" },
-        "residue_accepter": { "$ref": "#/$defs/non_empty_string" },
-        "reviewer": { "type": "string" }
+        "process_owner": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "technical_owner": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "residue_accepter": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "reviewer": {
+          "$ref": "#/$defs/non_empty_string"
+        }
       },
       "additionalProperties": true
     },
@@ -50,6 +87,7 @@
         "workflow_box",
         "control_topology",
         "value_mode",
+        "cost_framing",
         "trigger",
         "finished_state",
         "sinks",
@@ -59,34 +97,107 @@
         "agents",
         "hard_refuse",
         "observability",
-        "residue"
+        "residue",
+        "escalation_path"
       ],
       "properties": {
-        "card_type": { "const": "workflow" },
-        "aac_card_version": { "$ref": "#/$defs/non_empty_string" },
-        "workflow_id": { "$ref": "#/$defs/non_empty_string" },
-        "workflow_box": { "$ref": "#/$defs/non_empty_string" },
-        "control_topology": { "enum": ["unit", "graph_directed", "agent_directed_envelope", "hybrid"] },
-        "value_mode": { "enum": ["replace", "augment", "extend"] },
-        "trigger": { "$ref": "#/$defs/non_empty_string" },
-        "finished_state": { "$ref": "#/$defs/non_empty_string" },
+        "card_type": {
+          "const": "workflow"
+        },
+        "aac_card_version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "workflow_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "workflow_box": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "control_topology": {
+          "enum": [
+            "unit",
+            "graph_directed",
+            "agent_directed_envelope",
+            "hybrid"
+          ]
+        },
+        "value_mode": {
+          "enum": [
+            "replace",
+            "augment",
+            "extend"
+          ]
+        },
+        "trigger": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "finished_state": {
+          "$ref": "#/$defs/non_empty_string"
+        },
         "sinks": {
           "type": "object",
-          "required": ["happy", "refuse", "hard_refuse"],
+          "required": [
+            "happy",
+            "refuse",
+            "hard_refuse"
+          ],
           "properties": {
-            "happy": { "$ref": "#/$defs/non_empty_string" },
-            "refuse": { "$ref": "#/$defs/non_empty_string" },
-            "hard_refuse": { "$ref": "#/$defs/non_empty_string" }
+            "happy": {
+              "$ref": "#/$defs/non_empty_string"
+            },
+            "refuse": {
+              "$ref": "#/$defs/non_empty_string"
+            },
+            "hard_refuse": {
+              "$ref": "#/$defs/non_empty_string"
+            }
           },
           "additionalProperties": true
         },
-        "owners": { "$ref": "#/$defs/owner_set" },
-        "max_lane": { "$ref": "#/$defs/non_empty_string" },
-        "nodes": { "$ref": "#/$defs/non_empty_array" },
-        "agents": { "$ref": "#/$defs/non_empty_array" },
-        "hard_refuse": { "$ref": "#/$defs/non_empty_array" },
-        "observability": { "type": "object" },
-        "residue": { "type": "object" }
+        "owners": {
+          "$ref": "#/$defs/owner_set"
+        },
+        "max_lane": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "nodes": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "agents": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "hard_refuse": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "observability": {
+          "type": "object"
+        },
+        "residue": {
+          "type": "object"
+        },
+        "escalation_path": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "cost_framing": {
+          "type": "object",
+          "required": [
+            "cost_of_failure",
+            "cost_of_inaction",
+            "per_error_cost_band"
+          ],
+          "properties": {
+            "cost_of_failure": {
+              "$ref": "#/$defs/non_empty_string"
+            },
+            "cost_of_inaction": {
+              "$ref": "#/$defs/non_empty_string"
+            },
+            "per_error_cost_band": {
+              "$ref": "#/$defs/non_empty_string"
+            }
+          },
+          "additionalProperties": true
+        }
       },
       "additionalProperties": true
     },
@@ -110,31 +221,77 @@
         "kill_switch"
       ],
       "properties": {
-        "card_type": { "const": "node" },
-        "aac_card_version": { "$ref": "#/$defs/non_empty_string" },
-        "workflow": { "$ref": "#/$defs/non_empty_string" },
-        "node_id": { "$ref": "#/$defs/non_empty_string" },
-        "runtime_mode": { "enum": ["D", "C", "A", "H"] },
-        "max_lane": { "$ref": "#/$defs/non_empty_string" },
-        "owner": { "$ref": "#/$defs/non_empty_string" },
-        "input_contract": { "type": "object" },
-        "output_contract": { "type": "object" },
-        "data_classification": { "$ref": "#/$defs/non_empty_string" },
-        "disciplines": { "$ref": "#/$defs/discipline_set" },
+        "card_type": {
+          "const": "node"
+        },
+        "aac_card_version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "workflow": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "node_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "runtime_mode": {
+          "enum": [
+            "D",
+            "C",
+            "A",
+            "H"
+          ]
+        },
+        "max_lane": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "owner": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "input_contract": {
+          "type": "object"
+        },
+        "output_contract": {
+          "type": "object"
+        },
+        "data_classification": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "disciplines": {
+          "$ref": "#/$defs/discipline_set"
+        },
         "gates": {
           "type": "object",
-          "required": ["input", "output", "cross_check", "action"],
+          "required": [
+            "input",
+            "output",
+            "cross_check",
+            "action"
+          ],
           "properties": {
-            "input": { "type": "object" },
-            "output": { "type": "object" },
-            "cross_check": { "type": "object" },
-            "action": { "type": "object" }
+            "input": {
+              "type": "object"
+            },
+            "output": {
+              "type": "object"
+            },
+            "cross_check": {
+              "type": "object"
+            },
+            "action": {
+              "type": "object"
+            }
           },
           "additionalProperties": true
         },
-        "hard_refuse": { "$ref": "#/$defs/non_empty_array" },
-        "telemetry": { "type": "object" },
-        "kill_switch": { "$ref": "#/$defs/non_empty_string" }
+        "hard_refuse": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "telemetry": {
+          "type": "object"
+        },
+        "kill_switch": {
+          "$ref": "#/$defs/non_empty_string"
+        }
       },
       "additionalProperties": true
     },
@@ -159,22 +316,65 @@
         "disciplines"
       ],
       "properties": {
-        "card_type": { "const": "agent" },
-        "aac_card_version": { "$ref": "#/$defs/non_empty_string" },
-        "agent_id": { "$ref": "#/$defs/non_empty_string" },
-        "purpose": { "$ref": "#/$defs/non_empty_string" },
-        "allowed_workflows": { "$ref": "#/$defs/non_empty_array" },
-        "allowed_nodes": { "$ref": "#/$defs/non_empty_array" },
-        "tools": { "type": "array", "items": { "type": "object" } },
-        "allowed_action_classes": { "$ref": "#/$defs/non_empty_array" },
-        "forbidden_action_classes": { "$ref": "#/$defs/non_empty_array" },
-        "approval_required_actions": { "type": "array", "items": { "$ref": "#/$defs/non_empty_string" } },
-        "memory_policy": { "enum": ["none", "read_only", "proposal_only", "approved_write"] },
-        "telemetry_required": { "type": "boolean" },
-        "kill_switch": { "$ref": "#/$defs/non_empty_string" },
-        "owner": { "$ref": "#/$defs/non_empty_string" },
-        "residue_accepter": { "$ref": "#/$defs/non_empty_string" },
-        "disciplines": { "$ref": "#/$defs/discipline_set" }
+        "card_type": {
+          "const": "agent"
+        },
+        "aac_card_version": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "purpose": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "allowed_workflows": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "allowed_nodes": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "allowed_action_classes": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "forbidden_action_classes": {
+          "$ref": "#/$defs/non_empty_array"
+        },
+        "approval_required_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/non_empty_string"
+          }
+        },
+        "memory_policy": {
+          "enum": [
+            "none",
+            "read_only",
+            "proposal_only",
+            "approved_write"
+          ]
+        },
+        "telemetry_required": {
+          "type": "boolean"
+        },
+        "kill_switch": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "owner": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "residue_accepter": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "disciplines": {
+          "$ref": "#/$defs/discipline_set"
+        }
       },
       "additionalProperties": true
     }

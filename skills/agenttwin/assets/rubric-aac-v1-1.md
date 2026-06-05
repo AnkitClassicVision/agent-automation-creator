@@ -133,4 +133,4 @@ This is jidoka — stop the line on defect. AgentTwin stops the line when AAC sa
 
 This rubric is a pinned snapshot of AAC v1.1 (Agent Automation Creator). Canonical source: OB_mybcat thoughts under topic `aac` / `agent-automation-creator`. Locked 2026-05-14. Supersedes AAC v1.0 (formerly MSP-FLOW v1.0).
 
-Do not modify this file. If AAC graduates to v1.2 or later, re-snapshot intentionally by bumping the AgentTwin skill version and regenerating this asset.
+Do not modify the rubric body in this file. If AAC gets a later core-rubric snapshot, re-snapshot intentionally by bumping the AgentTwin skill version and regenerating this asset.
