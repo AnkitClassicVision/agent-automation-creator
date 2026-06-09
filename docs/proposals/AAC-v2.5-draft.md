@@ -97,6 +97,16 @@ Lane promotion is ring promotion. One table, two frameworks joined.
 
 **Improver.** Weekly cron. Input: run cards per node plus eval scores. Output: nothing, or a proposed card diff with rationale and predicted effect. The diff enters S7 like any human change. The Improver never edits live agents. SCOUT research patterns apply when evaluating model or prompt alternatives.
 
+## Eval set lifecycle (golden sets are versioned, not static)
+
+A golden set is the machine-readable definition of correct plus the control group for every change. Live traffic cannot serve as the benchmark: when the agent and the inflow change at the same time, a score delta attributes to nothing.
+
+1. Seed: graded examples from the grill (S5). Day one this is a smoke test, not a benchmark.
+2. Accrete from production: every human-review action (approve, edit, reject) is a labeled example. The review node's output stream is the harvest source. Disagreements promote first, novel input types second.
+3. Version: every addition or retirement bumps set_version. Eval scores cite agent version and set version. Comparisons hold the set version constant.
+4. Retire by diff, never by silent mutation. A golden set change is a card change and enters S7 like a prompt edit.
+5. Holdout split: the Improver develops against the open half; the Evaluator alone runs the sealed half at merge. Prevents the Improver from overfitting the benchmark. Same information-barrier pattern as Dark Factory QA. This is what the packet's holdout_set field holds.
+
 ## Token discipline
 
 1. Prefill before asking. The interviewer asks only what the brain and the data probe could not answer.
