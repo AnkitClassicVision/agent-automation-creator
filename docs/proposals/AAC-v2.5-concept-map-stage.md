@@ -90,9 +90,18 @@ which are exactly this PR's existing human gates. The pipeline reports the same 
 Regression test: `knowledge_repo/tests/test_agent_pipeline.py` (scaffold -> synthesize -> cards ->
 strict validate -> combined export, on a synthetic 12-node atlas).
 
+## Decisions
+
+1. **DECIDED (Ankit, 2026-06-09): S4a/S4b/S4c is REQUIRED for any workflow targeting lanes
+   send / write / pay or touching PHI; optional for read/recommend lanes.** Rationale: the HSD4
+   calibration showed verify steps rubber-stamp flowcharts when the why-layer is missing; cost is
+   minutes per risky agent.
+2. Runtime per node stays D / C / A / H per AAC Step 2 (cheapest runtime satisfying the attributes).
+   The pipeline now emits a `runtime_suggestion` (mode + signal + reason) on any node left TODO;
+   the human assigns the final mode at the grill. Deterministic tooling builds the maps; the agent
+   itself mixes deterministic and LLM nodes per node.
+
 ## Open decisions for Ankit
 
-1. Adopt S4a/S4b/S4c into `AAC-v2.5-draft.md`, or keep concept synthesis optional per workflow?
-   Proposal: required for any workflow targeting lanes send/write/pay or PHI; optional for read/recommend.
-2. Schema: allow object form of `workflow_card.nodes` (recommended) or keep strings + separate node list?
-3. Where does the package live long-term: knowledge_repo (current), this repo, or per-agent repos?
+1. Schema: allow object form of `workflow_card.nodes` (recommended) or keep strings + separate node list?
+2. Where does the package live long-term: knowledge_repo (current), this repo, or per-agent repos?
