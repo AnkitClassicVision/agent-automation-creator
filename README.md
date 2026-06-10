@@ -92,6 +92,14 @@ See [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) for the canonical AAC 2.0 operating p
 
 ---
 
+## Active draft proposal: AAC 2.5 factory layer
+
+AAC 2.0 remains the canonical operating package. The active draft proposal in [`docs/proposals/AAC-v2.5-draft.md`](docs/proposals/AAC-v2.5-draft.md) explores the next layer: turning a raw agent idea into an interviewed, graphed, carded, evaluated, launched, and improved workflow.
+
+The draft adds a Flow Interviewer front door, compiler/evaluator/improver contracts, and versioned golden sets so agent quality is measured against known-right examples instead of vibes. It is not canonical until the remaining human gates clear and the version decision is made.
+
+---
+
 ## Why this exists
 
 AI workflows fail in predictable ways:

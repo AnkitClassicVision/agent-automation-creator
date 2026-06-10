@@ -1,0 +1,199 @@
+{
+  "card_type": "workflow",
+  "aac_card_version": "2.5-draft",
+  "status": "DRAFT: pending Ankit grades on golden set and node card completion",
+  "workflow_id": "hsd4-dispositioner",
+  "workflow_box": "new HubSpot contact moving from arrival to a set disposition plus a confident next step",
+  "control_topology": "graph_directed",
+  "value_mode": "augment",
+  "trigger": "Contact created in HubSpot (currently ~21/day, all source OFFLINE)",
+  "finished_state": "hs_lead_status set, next step queued for human, or contact refused/hard-refused with reason",
+  "sinks": {
+    "happy": "disposition set + next-step draft queued for human review",
+    "refuse": "held for enrichment or missing context",
+    "hard_refuse": "blocked: identity unclear, do-not-contact, or rule violation"
+  },
+  "owners": {
+    "process_owner": "Ankit",
+    "technical_owner": "Hermes/AAC builder",
+    "reviewer": "Ankit",
+    "residue_accepter": "Ankit"
+  },
+  "owner_concentration_warning": "Single human holds all owner roles. Violates the transfer standard: weekly involvement cannot decrease. Name a second reviewer before R3.",
+  "max_lane": "draft",
+  "pilot_ring": "R2",
+  "lane_promotion": {
+    "target_lane": "send",
+    "condition": "20 consecutive drafts approved with zero edits",
+    "counter_reset_on": [
+      "any edit",
+      "any hard-refuse violation"
+    ],
+    "post_promotion_qa": "weekly spot-QA, 10% sample",
+    "evidence_ref": "run cards"
+  },
+  "director": "deterministic_router",
+  "nodes": [
+    {
+      "node_id": "hsd4-ingest",
+      "runtime_mode": "D",
+      "purpose": "pull new contacts, dedupe, snapshot",
+      "card": "TODO"
+    },
+    {
+      "node_id": "hsd4-identity-triage",
+      "runtime_mode": "D",
+      "purpose": "split named person vs anonymous visitor-intel record (47% of inflow)",
+      "card": "TODO"
+    },
+    {
+      "node_id": "hsd4-icp-classify",
+      "runtime_mode": "C",
+      "purpose": "on-ICP / off-ICP / ambiguous against MyBCAT ICP rules",
+      "card": "TODO"
+    },
+    {
+      "node_id": "hsd4-disposition",
+      "runtime_mode": "C",
+      "purpose": "set hs_lead_status + next-step recommendation with confidence",
+      "card": "TODO"
+    },
+    {
+      "node_id": "hsd4-draft-outreach",
+      "runtime_mode": "C",
+      "purpose": "draft intro outreach for pursue dispositions only, per outreach rules eval_ref",
+      "card": "TODO"
+    },
+    {
+      "node_id": "hsd4-human-review",
+      "runtime_mode": "H",
+      "purpose": "approve, edit, or reject; feeds run cards and the promotion counter",
+      "card": "TODO"
+    }
+  ],
+  "edges": [
+    {
+      "from": "hsd4-ingest",
+      "to": "hsd4-identity-triage",
+      "condition": "always"
+    },
+    {
+      "from": "hsd4-identity-triage",
+      "to": "hsd4-icp-classify",
+      "condition": "always"
+    },
+    {
+      "from": "hsd4-icp-classify",
+      "to": "hsd4-disposition",
+      "condition": "icp in [on, ambiguous]"
+    },
+    {
+      "from": "hsd4-icp-classify",
+      "to": "refuse_sink",
+      "condition": "icp = off: disposition disqualify, suppress"
+    },
+    {
+      "from": "hsd4-disposition",
+      "to": "hsd4-draft-outreach",
+      "condition": "disposition = pursue AND confidence >= 0.8"
+    },
+    {
+      "from": "hsd4-disposition",
+      "to": "hsd4-human-review",
+      "condition": "confidence < 0.8 OR disposition in [nurture, research]"
+    },
+    {
+      "from": "hsd4-draft-outreach",
+      "to": "hsd4-human-review",
+      "condition": "always"
+    }
+  ],
+  "hard_refuse": [
+    "PHI in any outreach draft",
+    "contact on do-not-contact list",
+    "identity unclear or account mismatch",
+    "unsupported factual claim about the recipient",
+    "any send, CRM mutation beyond hs_lead_status, or sequence enrollment in v1"
+  ],
+  "cost_framing": {
+    "cost_of_failure": "259 of 290 contacts created in the last 14 days carry no disposition (89%). ~18/day pile up unworked. Zero owners assigned on the newest 10.",
+    "cost_of_inaction": "One missed client = ~$85k LTV. Historical portal coverage is 94%, so live-stream dispositioning has stopped, not never existed.",
+    "per_error_cost_band": "medium"
+  },
+  "data_classification": "PII, B2B contacts, no PHI",
+  "observability": {
+    "run_card_required": true,
+    "review_cadence": "weekly during pilot",
+    "metrics": [
+      "dispositioned_count",
+      "no_edit_approval_rate",
+      "consecutive_no_edit_counter",
+      "refuse_rate",
+      "hard_refuse_count",
+      "off_icp_suppressed_count"
+    ]
+  },
+  "golden_set_ref": "evals/hsd4-dispositioner.golden.json",
+  "golden_set": [
+    {
+      "record_ref": "private-crm-ref-redacted-1",
+      "input_summary": "Kittery Optometric Associates, anonymous visitor record, on-ICP optometry, lifecycle already marked opportunity",
+      "proposed": "high-intent company signal: enrich, identify decision-maker, draft intro outreach",
+      "grade": "pending",
+      "graded_by": "",
+      "corrected": ""
+    },
+    {
+      "record_ref": "private-crm-ref-redacted-2",
+      "input_summary": "Jay Wallace, Smyrna Police Distributors, named person, clearly off-ICP",
+      "proposed": "disqualify, suppress from sequences",
+      "grade": "pending",
+      "graded_by": "",
+      "corrected": ""
+    },
+    {
+      "record_ref": "private-crm-ref-redacted-3",
+      "input_summary": "Michelle Murphy, Integris Health, named person with logged activity, health system not a practice",
+      "proposed": "qualify-research: confirm role, then pursue or nurture",
+      "grade": "pending",
+      "graded_by": "",
+      "corrected": ""
+    }
+  ],
+  "provenance": {
+    "workflow_box": {
+      "source": "confirmed",
+      "ref": "Ankit answer, round 1 q2, 2026-06-09"
+    },
+    "max_lane": {
+      "source": "confirmed",
+      "ref": "Ankit answer C, round 1 q3"
+    },
+    "lane_promotion": {
+      "source": "confirmed",
+      "ref": "Ankit pick B, 2026-06-09; counter_reset_on hard-refuse added by interviewer, veto open"
+    },
+    "cost_framing": {
+      "source": "measured",
+      "ref": "HubSpot live queries 2026-06-09: totals 290 / 137 / 259 / 15062 / 14119"
+    },
+    "owners": {
+      "source": "confirmed",
+      "ref": "Ankit answer, round 1 q5: just me"
+    },
+    "value_mode": {
+      "source": "assumed",
+      "ref": "interviewer inference, no objection raised"
+    },
+    "golden_set": {
+      "source": "measured",
+      "ref": "harvested from live CRM, grades pending"
+    },
+    "nodes_and_edges": {
+      "source": "assumed",
+      "ref": "interviewer proposal from data shape, needs S4 VERIFY"
+    }
+  },
+  "escalation_path": "Low-confidence, identity, and rule-violation cases hard-refuse to Ankit before any external action.",
+  "kill_switch": "disable hsd4-dispositioner profile or remove hs_lead_status write permission"
+}

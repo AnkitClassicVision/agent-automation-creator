@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- AAC 2.5 proposal: pipeline spec (front door, compiler, evaluator, improver), flow-interviewer skill v0.1 draft, first calibrated packet (HSD4 dispositioner), calibration record with gap log L1-L12, outreach rules eval_ref draft.
+
+
 ## AAC Framework
 
 ### [2.0] — 2026-06-05
