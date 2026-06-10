@@ -61,9 +61,15 @@ Query the live system of record: real volumes, field usage, owner assignment, an
 
 Calibration evidence: the repo's example card claimed 40 candidates/day. Production measured 21/day with 47% pollution, and the output field sat empty on 89% of the live stream. Paper gates pass on fiction. Data probes do not. Provenance: measured.
 
-### S4: Graph + VERIFY
+### S4: Territory, concept map, graph + VERIFY
 
-Declare nodes, edges with conditions, and the director. Render the graph (seeit). The human confirms the picture before any build step.
+Three artifacts, in order, then one human confirm (see `docs/proposals/AAC-v2.5-concept-map-stage.md`):
+
+- **S4a ATLAS territory**: interview answers and probe results land in `atlas/atlas.json` — spine locked as one falsifiable claim, every node tagged confidence / provenance / status / proof-slot. Shaky or tension beliefs are flagged, never polished.
+- **S4b Concept synthesis**: a deterministic generator turns the ATLAS spine into a lint-clean concept flow map (trunk = spine, branches = clusters, typed edges with why/how). This is the WHY layer the human verifies.
+- **S4c Process graph + cards**: declare nodes, edges with conditions, and the director; every node gets an AAC card carrying deliverable, artifact, owner, runtime mode, gates, telemetry, hard-refuse, kill switch, plus `concept_ref`/`atlas_ref` traceability back to the layers above.
+
+Render BOTH layers and the serves-links between them (seeit / `exports/agent_map.mmd`). The human confirms the picture before any build step. Reference implementation: `knowledge_repo` agent-package pipeline (scaffold, synthesize, cards, validate, combined export).
 
 ### S5: Golden harvest (grade, never author)
 
