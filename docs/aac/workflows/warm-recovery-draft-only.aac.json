@@ -1,6 +1,6 @@
 {
   "card_type": "workflow",
-  "aac_card_version": "2.0",
+  "aac_card_version": "2.1",
   "workflow_id": "warm-recovery-draft-only",
   "workflow_box": "warm recovery candidate packet",
   "control_topology": "graph_directed",
@@ -59,5 +59,70 @@
     "cost_of_inaction": "Warm leads decay after roughly a week, increasing reseed effort and lowering booked-appointment conversion probability.",
     "per_error_cost_band": "medium"
   },
-  "escalation_path": "Low-confidence, consent, identity, PHI-channel, or account-match issues hard-refuse to the named reviewer before any external action."
+  "escalation_path": "Low-confidence, consent, identity, PHI-channel, or account-match issues hard-refuse to the named reviewer before any external action.",
+  "aac_sync_contract": {
+    "schema_version": "2.1",
+    "aac_operating_package_version": "2.1",
+    "aac_core_rubric_version": "1.1",
+    "aac_factory_version": "0.3.0",
+    "capability_set": "tool-reality-maintenance-v0.1",
+    "drift_policy": "AAC v2.1 and AAC Factory v0.3.0 share tool/maintenance semantics; AAC v1.1 core rubric remains unchanged.",
+    "canonical_fields": [
+      "aac_sync_contract",
+      "maintenance_contract",
+      "tool_card",
+      "tool_pool_contract",
+      "tool_reality_gate",
+      "fable_tool_proof_run",
+      "harness_update_proposal"
+    ]
+  },
+  "maintenance_contract": {
+    "schema_version": "2.1",
+    "workflow_id": "warm-recovery-draft-only",
+    "current_job_sentence": "This workflow creates draft-only warm recovery review packets from approved source snapshots for a named human reviewer; it cannot send, mutate CRM, or enroll sequences.",
+    "owner": "Bre or named ops owner",
+    "technical_owner": "Hermes/AAC builder",
+    "residue_accepter": "Ankit for pilot only",
+    "risk_class": "draft",
+    "max_lane": "draft",
+    "allowed_update_types": [
+      "prune_context",
+      "prune_memory",
+      "narrow_tools",
+      "repoint_sources",
+      "update_prompt_with_replay_proof",
+      "pause",
+      "retire"
+    ],
+    "forbidden_update_types": [
+      "silent_self_rewrite",
+      "increase_lane_without_human_approval",
+      "add_tool_without_tool_card_and_proof",
+      "modify_memory_or_external_action_behavior_without_approval"
+    ],
+    "approval_required_for": [
+      "durable_instructions",
+      "memory_policy",
+      "tool_pool",
+      "reach_or_lane",
+      "external_action_behavior"
+    ],
+    "maintenance_triggers": [
+      "upstream_model_or_api_change",
+      "tool_auth_or_schema_change",
+      "repeated_human_correction",
+      "quiet_failure_or_no_value",
+      "scope_creep_or_lane_pressure",
+      "safety_near_miss",
+      "stale_context_or_memory_signal"
+    ],
+    "replay_pack_ref": "docs/aac/calibration/README.md",
+    "golden_set_ref": "docs/aac/calibration/README.md",
+    "run_card_ref": "docs/aac/run-card.schema.json",
+    "update_proposals_ref": "docs/aac/harness-update-proposals.jsonl",
+    "rollback_plan": "Revert card/prompt/tool-contract diff; re-run scripts/aac_gate.py --all plus AgentTwin/AAC review before promotion.",
+    "next_review_trigger": "first maintenance trigger or before any lane increase",
+    "autonomous_self_update_allowed": false
+  }
 }

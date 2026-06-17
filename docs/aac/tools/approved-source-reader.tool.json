@@ -1,0 +1,36 @@
+{
+  "card_type": "tool",
+  "tool_id": "approved-source-reader",
+  "name": "Approved Source Reader",
+  "responsibility": "Read approved source snapshots for warm recovery candidates without exposing raw PHI or mutating source systems.",
+  "input_schema": {
+    "required_fields": [
+      "candidate_ref",
+      "source_system",
+      "eligibility_snapshot_ref"
+    ]
+  },
+  "output_schema": {
+    "required_fields": [
+      "source_ids",
+      "eligibility_flags",
+      "refuse_flags"
+    ]
+  },
+  "side_effect_profile": "none",
+  "permission_tier": "always_allow",
+  "max_lane_allowed": "read",
+  "dry_run_available": true,
+  "idempotency_required": false,
+  "audit_log_path": "docs/aac/run-card.schema.json",
+  "rollback_or_reversal": "n/a read-only",
+  "known_failure_modes": [
+    "stale snapshot",
+    "missing source ID",
+    "unsafe raw PHI field"
+  ],
+  "auth_dependency": "approved source snapshot only; no live credential in card",
+  "safe_test_available": true,
+  "proof_status": "sandbox_proven",
+  "owner": "Hermes/AAC builder"
+}

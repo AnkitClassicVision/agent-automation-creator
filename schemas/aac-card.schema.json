@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/AnkitClassicVision/agent-automation-creator/schemas/aac-card.schema.json",
-  "title": "AAC Card Schema v2.0",
-  "description": "AAC 2.0 card contract for workflow, node, and agent-envelope artifacts. GitHub Actions can validate creation gates and deterministic fields before merge.",
+  "title": "AAC Card Schema v2.1",
+  "description": "AAC 2.1 card contract for workflow, node, agent-envelope, and tool artifacts. Adds Tool Reality + Harness Maintenance fields while preserving the AAC v1.1 core rubric.",
   "oneOf": [
     {
       "$ref": "#/$defs/workflow_card"
@@ -12,6 +12,9 @@
     },
     {
       "$ref": "#/$defs/agent_card"
+    },
+    {
+      "$ref": "#/$defs/tool_card"
     }
   ],
   "$defs": {
@@ -98,7 +101,9 @@
         "hard_refuse",
         "observability",
         "residue",
-        "escalation_path"
+        "escalation_path",
+        "aac_sync_contract",
+        "maintenance_contract"
       ],
       "properties": {
         "card_type": {
@@ -197,6 +202,12 @@
             }
           },
           "additionalProperties": true
+        },
+        "aac_sync_contract": {
+          "$ref": "#/$defs/aac_sync_contract"
+        },
+        "maintenance_contract": {
+          "$ref": "#/$defs/maintenance_contract"
         }
       },
       "additionalProperties": true
@@ -218,7 +229,9 @@
         "gates",
         "hard_refuse",
         "telemetry",
-        "kill_switch"
+        "kill_switch",
+        "tool_pool_contract",
+        "tool_reality_gate"
       ],
       "properties": {
         "card_type": {
@@ -291,6 +304,12 @@
         },
         "kill_switch": {
           "$ref": "#/$defs/non_empty_string"
+        },
+        "tool_pool_contract": {
+          "$ref": "#/$defs/tool_pool_contract"
+        },
+        "tool_reality_gate": {
+          "$ref": "#/$defs/tool_reality_gate"
         }
       },
       "additionalProperties": true
@@ -313,7 +332,9 @@
         "kill_switch",
         "owner",
         "residue_accepter",
-        "disciplines"
+        "disciplines",
+        "tool_pool_contract",
+        "tool_reality_gate"
       ],
       "properties": {
         "card_type": {
@@ -374,6 +395,93 @@
         },
         "disciplines": {
           "$ref": "#/$defs/discipline_set"
+        },
+        "tool_pool_contract": {
+          "$ref": "#/$defs/tool_pool_contract"
+        },
+        "tool_reality_gate": {
+          "$ref": "#/$defs/tool_reality_gate"
+        }
+      },
+      "additionalProperties": true
+    },
+    "aac_sync_contract": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "aac_operating_package_version",
+        "aac_core_rubric_version",
+        "aac_factory_version",
+        "capability_set",
+        "drift_policy",
+        "canonical_fields"
+      ],
+      "additionalProperties": true
+    },
+    "maintenance_contract": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "workflow_id",
+        "current_job_sentence",
+        "owner",
+        "technical_owner",
+        "residue_accepter",
+        "approval_required_for",
+        "maintenance_triggers",
+        "replay_pack_ref",
+        "run_card_ref",
+        "update_proposals_ref",
+        "rollback_plan",
+        "autonomous_self_update_allowed"
+      ],
+      "additionalProperties": true
+    },
+    "tool_pool_contract": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "node_id",
+        "runtime_mode",
+        "max_lane",
+        "allowed_tools",
+        "forbidden_tools_by_default",
+        "approval_required_for_tool_changes"
+      ],
+      "additionalProperties": true
+    },
+    "tool_reality_gate": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "node_id",
+        "status",
+        "proof_status",
+        "fable_tool_proof_run_ref",
+        "tool_change_rule"
+      ],
+      "additionalProperties": true
+    },
+    "tool_card": {
+      "type": "object",
+      "required": [
+        "card_type",
+        "tool_id",
+        "name",
+        "responsibility",
+        "input_schema",
+        "output_schema",
+        "side_effect_profile",
+        "permission_tier",
+        "max_lane_allowed",
+        "proof_status",
+        "owner",
+        "audit_log_path",
+        "rollback_or_reversal"
+      ],
+      "properties": {
+        "card_type": {
+          "const": "tool"
         }
       },
       "additionalProperties": true

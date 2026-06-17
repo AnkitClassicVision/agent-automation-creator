@@ -1,6 +1,6 @@
 {
   "card_type": "node",
-  "aac_card_version": "2.0",
+  "aac_card_version": "2.1",
   "workflow": "warm-recovery-draft-only",
   "node_id": "warm-recovery-draft-followup",
   "runtime_mode": "C",
@@ -90,5 +90,45 @@
     "external_side_effect_count_must_equal": 0,
     "review_packet_ref_required": true
   },
-  "kill_switch": "disable draft generation"
+  "kill_switch": "disable draft generation",
+  "tool_pool_contract": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-draft-followup",
+    "runtime_mode": "C",
+    "max_lane": "draft",
+    "allowed_tools": [
+      {
+        "tool_id": "review-packet-writer",
+        "why_needed": "write private draft packet for human approval",
+        "allowed_operations": [
+          "write_private_review_packet"
+        ],
+        "forbidden_operations": [
+          "send",
+          "write_crm",
+          "sequence_enrollment"
+        ],
+        "max_lane": "draft",
+        "proof_required": true,
+        "proof_status": "sandbox_proven"
+      }
+    ],
+    "forbidden_tools": [],
+    "forbidden_tools_by_default": true,
+    "minimum_tool_pool": [
+      "review-packet-writer"
+    ],
+    "tool_pruning_rationale": "Only the reviewed tools needed for this node are present; every added tool requires a Tool Card, proof run, and approval.",
+    "approval_required_for_tool_changes": true
+  },
+  "tool_reality_gate": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-draft-followup",
+    "status": "pass_tool_proven",
+    "proof_status": "sandbox_proven",
+    "fable_tool_proof_run_ref": "docs/aac/tool-proof-runs/warm-recovery-draft-followup/",
+    "last_verified": "2026-06-17",
+    "blocks_live_lane_until": null,
+    "tool_change_rule": "detect and propose; never silently rewrite durable instructions, memory, tool pool, reach, or external-action behavior"
+  }
 }

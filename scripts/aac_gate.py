@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AAC Creation Gate v2.0.
+"""AAC Creation Gate v2.1.
 
 Deterministic CI gate for AAC card artifacts. It validates workflow, node,
 agent-envelope, registry, and run-card schema files without external packages.
@@ -55,6 +55,12 @@ RELEVANT_PREFIXES = (
 
 DISCIPLINES = ("bounded", "grounded", "gated", "observed", "governed")
 GATES = ("input", "output", "cross_check", "action")
+TOOL_PROOF_STATUSES = ("unverified", "simulated", "sandbox_proven", "real_runtime_proven", "not_applicable")
+LIVE_TOOL_PROOF_STATUSES = {"sandbox_proven", "real_runtime_proven", "not_applicable"}
+AAC_SYNC_REQUIRED = ("schema_version", "aac_operating_package_version", "aac_core_rubric_version", "aac_factory_version", "capability_set", "drift_policy", "canonical_fields")
+MAINTENANCE_REQUIRED = ("schema_version", "workflow_id", "current_job_sentence", "owner", "technical_owner", "residue_accepter", "approval_required_for", "maintenance_triggers", "replay_pack_ref", "run_card_ref", "update_proposals_ref", "rollback_plan", "autonomous_self_update_allowed")
+TOOL_POOL_REQUIRED = ("schema_version", "node_id", "runtime_mode", "max_lane", "allowed_tools", "forbidden_tools_by_default", "approval_required_for_tool_changes")
+TOOL_GATE_REQUIRED = ("schema_version", "node_id", "status", "proof_status", "fable_tool_proof_run_ref", "tool_change_rule")
 
 
 @dataclass
@@ -165,6 +171,92 @@ def require_nested(card: dict[str, Any], path: str, parent: str, fields: tuple[s
             )
 
 
+
+def require_aac_sync_contract(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
+    contract = card.get("aac_sync_contract")
+    if not isinstance(contract, dict):
+        findings.append(Finding("FAIL", path, "missing object 'aac_sync_contract'", "Add the AAC v2.1 sync contract so AAC and AAC Factory cannot drift."))
+        return
+    for field in AAC_SYNC_REQUIRED:
+        if field not in contract or not non_empty(contract[field]):
+            findings.append(Finding("FAIL", path, f"missing 'aac_sync_contract.{field}'", "Use AAC v2.1 / AAC Factory v0.3.0 sync fields."))
+    if contract.get("aac_operating_package_version") != "2.1":
+        findings.append(Finding("FAIL", path, "aac_sync_contract.aac_operating_package_version must be 2.1", "Update the card to AAC v2.1 semantics."))
+    if contract.get("aac_factory_version") != "0.3.0":
+        findings.append(Finding("FAIL", path, "aac_sync_contract.aac_factory_version must be 0.3.0", "Update the factory sync pin."))
+    if contract.get("capability_set") != "tool-reality-maintenance-v0.1":
+        findings.append(Finding("FAIL", path, "aac_sync_contract.capability_set must be tool-reality-maintenance-v0.1", "Use the shared Tool Reality + Maintenance capability set."))
+
+
+def require_maintenance_contract(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
+    contract = card.get("maintenance_contract")
+    if not isinstance(contract, dict):
+        findings.append(Finding("FAIL", path, "missing object 'maintenance_contract'", "Add owner, triggers, replay refs, approval rules, rollback plan, and autonomous_self_update_allowed=false."))
+        return
+    for field in MAINTENANCE_REQUIRED:
+        if field not in contract or not non_empty(contract[field]):
+            findings.append(Finding("FAIL", path, f"missing 'maintenance_contract.{field}'", "Add the harness maintenance contract before merge/promotion."))
+    if contract.get("autonomous_self_update_allowed") is not False:
+        findings.append(Finding("FAIL", path, "maintenance_contract.autonomous_self_update_allowed must be false", "Agents may detect/propose harness updates, not silently rewrite themselves."))
+    approvals = set(contract.get("approval_required_for") or [])
+    for field in ("durable_instructions", "memory_policy", "tool_pool", "reach_or_lane", "external_action_behavior"):
+        if field not in approvals:
+            findings.append(Finding("FAIL", path, f"maintenance_contract.approval_required_for missing {field}", "High-risk harness changes require proposal + replay/Fable proof + approval."))
+
+
+def require_tool_pool_contract(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
+    contract = card.get("tool_pool_contract")
+    node_id = card.get("node_id") or card.get("agent_id") or path
+    if not isinstance(contract, dict):
+        findings.append(Finding("FAIL", path, "missing object 'tool_pool_contract'", "Declare the smallest allowed tool set; use an empty allowed_tools list when no model-facing tools are allowed."))
+        return
+    for field in TOOL_POOL_REQUIRED:
+        if field not in contract:
+            findings.append(Finding("FAIL", path, f"missing 'tool_pool_contract.{field}'", "Tool pools must be inspectable and approval-gated."))
+        elif field != "allowed_tools" and not non_empty(contract[field]):
+            findings.append(Finding("FAIL", path, f"missing 'tool_pool_contract.{field}'", "Tool pools must be inspectable and approval-gated."))
+    if contract.get("forbidden_tools_by_default") is not True:
+        findings.append(Finding("FAIL", path, "tool_pool_contract.forbidden_tools_by_default must be true", "Default deny prevents accidental tool reach."))
+    if contract.get("approval_required_for_tool_changes") is not True:
+        findings.append(Finding("FAIL", path, "tool_pool_contract.approval_required_for_tool_changes must be true", "Tool additions/removals require review."))
+    allowed = contract.get("allowed_tools") or []
+    if not isinstance(allowed, list):
+        findings.append(Finding("FAIL", path, "tool_pool_contract.allowed_tools must be a list", "Use [] for no tools or tool objects with proof_status."))
+        return
+    for idx, tool in enumerate(allowed):
+        if not isinstance(tool, dict):
+            findings.append(Finding("FAIL", path, f"tool_pool_contract.allowed_tools[{idx}] must be an object", "Use tool objects, not strings."))
+            continue
+        for field in ("tool_id", "why_needed", "allowed_operations", "forbidden_operations", "max_lane", "proof_required", "proof_status"):
+            if field not in tool or not non_empty(tool[field]):
+                findings.append(Finding("FAIL", path, f"tool_pool_contract.allowed_tools[{idx}].{field} missing", "Every allowed tool needs scope and proof."))
+        if tool.get("proof_required") is not True:
+            findings.append(Finding("FAIL", path, f"tool_pool_contract.allowed_tools[{idx}].proof_required must be true", "No tool reaches promotion without proof."))
+        if tool.get("proof_status") not in TOOL_PROOF_STATUSES:
+            findings.append(Finding("FAIL", path, f"tool_pool_contract.allowed_tools[{idx}].proof_status invalid", "Use unverified, simulated, sandbox_proven, real_runtime_proven, or not_applicable."))
+
+
+def require_tool_reality_gate(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
+    gate = card.get("tool_reality_gate")
+    if not isinstance(gate, dict):
+        findings.append(Finding("FAIL", path, "missing object 'tool_reality_gate'", "Add proof status and Fable proof-run reference for the tool pool."))
+        return
+    for field in TOOL_GATE_REQUIRED:
+        if field not in gate or not non_empty(gate[field]):
+            findings.append(Finding("FAIL", path, f"missing 'tool_reality_gate.{field}'", "Tool proof must be explicit before promotion."))
+    if gate.get("proof_status") not in TOOL_PROOF_STATUSES:
+        findings.append(Finding("FAIL", path, "tool_reality_gate.proof_status invalid", "Use unverified, simulated, sandbox_proven, real_runtime_proven, or not_applicable."))
+
+
+def validate_tool(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
+    require_fields(card, path, ["card_type", "tool_id", "name", "responsibility", "input_schema", "output_schema", "side_effect_profile", "permission_tier", "max_lane_allowed", "proof_status", "owner", "audit_log_path", "rollback_or_reversal"], findings)
+    if card.get("proof_status") not in TOOL_PROOF_STATUSES:
+        findings.append(Finding("FAIL", path, "proof_status invalid", "Use unverified, simulated, sandbox_proven, real_runtime_proven, or not_applicable."))
+    if card.get("side_effect_profile") not in {"none", "local_write", "remote_write", "external_send", "money", "ehr_crm_finance", "deploy"}:
+        findings.append(Finding("FAIL", path, "side_effect_profile invalid", "Declare one of none/local_write/remote_write/external_send/money/ehr_crm_finance/deploy."))
+    if card.get("permission_tier") not in {"always_allow", "ask_first", "forbidden_by_default"}:
+        findings.append(Finding("FAIL", path, "permission_tier invalid", "Use always_allow, ask_first, or forbidden_by_default."))
+
 def lane_index(lane: str) -> int:
     try:
         return LANE_ORDER.index(lane)
@@ -198,6 +290,8 @@ def validate_workflow(card: dict[str, Any], path: str, findings: list[Finding]) 
     require_nested(card, path, "sinks", ("happy", "refuse", "hard_refuse"), findings)
     require_nested(card, path, "owners", ("process_owner", "technical_owner", "reviewer", "residue_accepter"), findings)
     require_nested(card, path, "cost_framing", ("cost_of_failure", "cost_of_inaction", "per_error_cost_band"), findings)
+    require_aac_sync_contract(card, path, findings)
+    require_maintenance_contract(card, path, findings)
     if card.get("control_topology") not in {"unit", "graph_directed", "agent_directed_envelope", "hybrid"}:
         findings.append(
             Finding(
@@ -237,6 +331,8 @@ def validate_node(card: dict[str, Any], path: str, findings: list[Finding]) -> N
         findings.append(Finding("FAIL", path, "runtime_mode must be D, C, A, or H", "Assign runtime by AAC attributes."))
     require_nested(card, path, "disciplines", DISCIPLINES, findings)
     require_nested(card, path, "gates", GATES, findings)
+    require_tool_pool_contract(card, path, findings)
+    require_tool_reality_gate(card, path, findings)
 
 
 def validate_agent(card: dict[str, Any], path: str, findings: list[Finding]) -> None:
@@ -261,6 +357,8 @@ def validate_agent(card: dict[str, Any], path: str, findings: list[Finding]) -> 
         findings,
     )
     require_nested(card, path, "disciplines", DISCIPLINES, findings)
+    require_tool_pool_contract(card, path, findings)
+    require_tool_reality_gate(card, path, findings)
     if card.get("memory_policy") not in {"none", "read_only", "proposal_only", "approved_write"}:
         findings.append(
             Finding(
@@ -278,6 +376,7 @@ def validate_cross_refs(
     workflows: dict[str, tuple[dict[str, Any], str]],
     nodes: dict[str, tuple[dict[str, Any], str]],
     agents: dict[str, tuple[dict[str, Any], str]],
+    tools: dict[str, tuple[dict[str, Any], str]],
     findings: list[Finding],
 ) -> None:
     for workflow_id, (workflow, workflow_path) in workflows.items():
@@ -330,6 +429,15 @@ def validate_cross_refs(
                 )
             )
 
+        for tool_ref in agent.get("tools", []):
+            tool_id = tool_ref.get("tool_id") if isinstance(tool_ref, dict) else str(tool_ref)
+            if tool_id and tool_id not in tools:
+                findings.append(Finding("FAIL", agent_path, f"agent references missing tool card '{tool_id}'", "Add docs/aac/tools/<tool>.tool.json or remove the tool from the envelope."))
+        for tool_ref in (agent.get("tool_pool_contract") or {}).get("allowed_tools", []):
+            tool_id = tool_ref.get("tool_id") if isinstance(tool_ref, dict) else str(tool_ref)
+            if tool_id and tool_id not in tools:
+                findings.append(Finding("FAIL", agent_path, f"tool_pool_contract references missing tool card '{tool_id}'", "Allowed tools must have Tool Cards."))
+
 
 def validate_registry(repo: Path, agents: dict[str, tuple[dict[str, Any], str]], findings: list[Finding]) -> None:
     registry_path = repo / "docs" / "aac" / "agent-registry.json"
@@ -358,12 +466,14 @@ def validate_registry(repo: Path, agents: dict[str, tuple[dict[str, Any], str]],
             )
 
 
-def collect_cards(repo: Path, findings: list[Finding]) -> tuple[dict[str, tuple[dict[str, Any], str]], dict[str, tuple[dict[str, Any], str]], dict[str, tuple[dict[str, Any], str]]]:
+def collect_cards(repo: Path, findings: list[Finding]) -> tuple[dict[str, tuple[dict[str, Any], str]], dict[str, tuple[dict[str, Any], str]], dict[str, tuple[dict[str, Any], str]], dict[str, tuple[dict[str, Any], str]]]:
     workflows: dict[str, tuple[dict[str, Any], str]] = {}
     nodes: dict[str, tuple[dict[str, Any], str]] = {}
     agents: dict[str, tuple[dict[str, Any], str]] = {}
+    tools: dict[str, tuple[dict[str, Any], str]] = {}
 
-    for path in sorted((repo / "docs" / "aac").glob("**/*.aac.json")):
+    card_paths = sorted((repo / "docs" / "aac").glob("**/*.aac.json")) + sorted((repo / "docs" / "aac").glob("**/*.tool.json"))
+    for path in card_paths:
         rel = str(path.relative_to(repo))
         data = load_json(path, findings)
         if not isinstance(data, dict):
@@ -384,21 +494,26 @@ def collect_cards(repo: Path, findings: list[Finding]) -> tuple[dict[str, tuple[
             agent_id = data.get("agent_id")
             if isinstance(agent_id, str):
                 agents[agent_id] = (data, rel)
+        elif card_type == "tool":
+            validate_tool(data, rel, findings)
+            tool_id = data.get("tool_id")
+            if isinstance(tool_id, str):
+                tools[tool_id] = (data, rel)
         else:
             findings.append(
                 Finding(
                     "FAIL",
                     rel,
-                    "card_type must be workflow, node, or agent",
+                    "card_type must be workflow, node, agent, or tool",
                     "Set card_type and include the required fields for that card type.",
                 )
             )
 
-    return workflows, nodes, agents
+    return workflows, nodes, agents, tools
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Validate AAC 2.0 card artifacts.")
+    parser = argparse.ArgumentParser(description="Validate AAC 2.1 card artifacts.")
     parser.add_argument("--repo", default=".", help="Repository root")
     parser.add_argument("--base", default=os.getenv("GITHUB_BASE_SHA"), help="Base SHA for changed-file detection")
     parser.add_argument("--head", default=os.getenv("GITHUB_SHA"), help="Head SHA for changed-file detection")
@@ -420,7 +535,7 @@ def main() -> int:
         print("AAC Creation Gate: PASS (no AAC-relevant changed files detected)")
         return 0
 
-    workflows, nodes, agents = collect_cards(repo, findings)
+    workflows, nodes, agents, tools = collect_cards(repo, findings)
 
     if relevant and not (workflows or nodes or agents):
         findings.append(
@@ -432,7 +547,7 @@ def main() -> int:
             )
         )
 
-    validate_cross_refs(workflows, nodes, agents, findings)
+    validate_cross_refs(workflows, nodes, agents, tools, findings)
     validate_registry(repo, agents, findings)
 
     run_schema = repo / "docs" / "aac" / "run-card.schema.json"
@@ -467,7 +582,7 @@ def main() -> int:
         else:
             print("## Result: PASS")
             print()
-            print(f"Validated {len(workflows)} workflow card(s), {len(nodes)} node card(s), and {len(agents)} agent card(s).")
+            print(f"Validated {len(workflows)} workflow card(s), {len(nodes)} node card(s), {len(agents)} agent card(s), and {len(tools)} tool card(s).")
     else:
         if failures:
             print("AAC Creation Gate: FAIL")
@@ -475,7 +590,7 @@ def main() -> int:
                 print(finding.render())
         else:
             print("AAC Creation Gate: PASS")
-            print(f"Validated {len(workflows)} workflow card(s), {len(nodes)} node card(s), and {len(agents)} agent card(s).")
+            print(f"Validated {len(workflows)} workflow card(s), {len(nodes)} node card(s), {len(agents)} agent card(s), and {len(tools)} tool card(s).")
 
     return 1 if failures else 0
 

@@ -1,0 +1,38 @@
+{
+  "card_type": "tool",
+  "tool_id": "review-packet-writer",
+  "name": "Private Review Packet Writer",
+  "responsibility": "Write a private draft/review packet for human approval; never send externally or mutate CRM state.",
+  "input_schema": {
+    "required_fields": [
+      "candidate_ref",
+      "draft_text",
+      "rationale",
+      "source_ids",
+      "approval_required"
+    ]
+  },
+  "output_schema": {
+    "required_fields": [
+      "review_packet_ref",
+      "external_actions_taken"
+    ]
+  },
+  "side_effect_profile": "local_write",
+  "permission_tier": "ask_first",
+  "max_lane_allowed": "draft",
+  "dry_run_available": true,
+  "idempotency_required": true,
+  "idempotency_mechanism": "candidate_ref + run_id unique packet path",
+  "audit_log_path": "docs/aac/run-card.schema.json",
+  "rollback_or_reversal": "delete private review packet before approval; no external side effects allowed",
+  "known_failure_modes": [
+    "duplicate packet",
+    "unsupported claim",
+    "accidental send/write request"
+  ],
+  "auth_dependency": "private artifact write permission only; no CRM writer",
+  "safe_test_available": true,
+  "proof_status": "sandbox_proven",
+  "owner": "Hermes/AAC builder"
+}

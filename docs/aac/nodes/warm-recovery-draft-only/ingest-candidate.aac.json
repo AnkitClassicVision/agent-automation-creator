@@ -1,6 +1,6 @@
 {
   "card_type": "node",
-  "aac_card_version": "2.0",
+  "aac_card_version": "2.1",
   "workflow": "warm-recovery-draft-only",
   "node_id": "warm-recovery-ingest-candidate",
   "runtime_mode": "D",
@@ -86,5 +86,45 @@
     "run_card_required": true,
     "external_side_effect_count_must_equal": 0
   },
-  "kill_switch": "disable workflow intake"
+  "kill_switch": "disable workflow intake",
+  "tool_pool_contract": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-ingest-candidate",
+    "runtime_mode": "D",
+    "max_lane": "read",
+    "allowed_tools": [
+      {
+        "tool_id": "approved-source-reader",
+        "why_needed": "read the approved eligibility snapshot",
+        "allowed_operations": [
+          "read_snapshot"
+        ],
+        "forbidden_operations": [
+          "write",
+          "send",
+          "mutate_crm"
+        ],
+        "max_lane": "read",
+        "proof_required": true,
+        "proof_status": "sandbox_proven"
+      }
+    ],
+    "forbidden_tools": [],
+    "forbidden_tools_by_default": true,
+    "minimum_tool_pool": [
+      "approved-source-reader"
+    ],
+    "tool_pruning_rationale": "Only the reviewed tools needed for this node are present; every added tool requires a Tool Card, proof run, and approval.",
+    "approval_required_for_tool_changes": true
+  },
+  "tool_reality_gate": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-ingest-candidate",
+    "status": "pass_tool_proven",
+    "proof_status": "sandbox_proven",
+    "fable_tool_proof_run_ref": "docs/aac/tool-proof-runs/warm-recovery-ingest-candidate/",
+    "last_verified": "2026-06-17",
+    "blocks_live_lane_until": null,
+    "tool_change_rule": "detect and propose; never silently rewrite durable instructions, memory, tool pool, reach, or external-action behavior"
+  }
 }
