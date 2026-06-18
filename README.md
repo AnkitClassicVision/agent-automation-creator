@@ -1,27 +1,27 @@
 # AAC — Agent Automation Creator
 
-**AAC 2.0: a process-first framework and creation-time operating package for AI-augmented workflows and agents.**
+**AAC 2.1: a process-first framework and creation-time operating package for AI-augmented workflows and agents.**
 
 Most failed AI projects design the AI first and try to fit a process around it. AAC reverses the order. Map the process correctly. Then assign the right runtime to each piece of work. Then apply closed-loop AI discipline at the node and agent-envelope level.
 
-The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. AAC 2.0 is a specification, an assessment instrument, a creation gate, and a CI-enforceable card model.
+The result is workflows that are fast, reliable, observable, governed, and cost-disciplined. Not a vibe. AAC 2.1 is a specification, an assessment instrument, a creation gate, and a CI-enforceable card model.
 
 ![Turn Any Process Into an Automated Workflow](docs/turn-any-process-into-a-workflow.png)
 
 ---
 
-## Why AAC is now 2.0
+## Why AAC is now 2.1
 
 The earlier update was labeled as a practice-layer addendum because the core v1.1 rubric did not change. That was too conservative once AAC started governing **agent creation**, not just workflow assessment.
 
-AAC 2.0 is justified because the contract changed:
+AAC 2.0 was justified because the contract changed. AAC 2.1 keeps that contract and adds tool/runtime maintenance proof:
 
 1. **Before build** — weak agent prompts/specs now fail at the front door.
 2. **Before merge** — workflow/node/agent cards are review artifacts, not optional notes.
 3. **Before runtime** — max lane, owner, residue, kill switch, and run-card proof are required before higher-blast-radius execution.
 4. **Across surfaces** — the same AAC packet can travel through Hermes, GitHub, Claude Code, Codex, Gemini, and manual chat.
 
-The v1.1 core remains intact. AAC 2.0 = **v1.1 core rubric + creation gates + boundary model + artifacts + enforcement**.
+The v1.1 core remains intact. AAC 2.1 = **v1.1 core rubric + creation gates + boundary model + artifacts + enforcement + Tool Reality + Harness Maintenance**.
 
 ---
 
@@ -29,11 +29,11 @@ The v1.1 core remains intact. AAC 2.0 = **v1.1 core rubric + creation gates + bo
 
 | File | What it is | Who it's for |
 |---|---|---|
-| [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) | Canonical AAC 2.0 operating package: v1.1 core plus creation gates, boundary model, card artifacts, and enforcement | Builders, operators, vendors, auditors |
+| [`docs/AAC-v2.1.md`](docs/AAC-v2.1.md) | Canonical AAC 2.1 operating package: v2.0 plus Tool Reality Gate, maintenance contracts, and AAC/Factory drift guard | Builders, operators, vendors, auditors |
 | [`docs/AAC-v1.1.pdf`](docs/AAC-v1.1.pdf) | Core rubric reference snapshot, 34 pages, 57 items | Builders, operators, vendors, auditors |
 | [`docs/AAC-boundary-creation-addendum-v0.1.md`](docs/AAC-boundary-creation-addendum-v0.1.md) | Backward-compatible pointer to AAC v2.0 for older links | Existing readers |
-| [`docs/aac/`](docs/aac/) | Example workflow, node, agent, registry, and run-card artifacts for GitHub enforcement | Teams making agent changes reviewable before merge |
-| [`schemas/aac-card.schema.json`](schemas/aac-card.schema.json) | Minimal workflow/node/agent card schema | Tooling and CI validators |
+| [`docs/aac/`](docs/aac/) | Example workflow, node, agent, tool, registry, and run-card artifacts for GitHub enforcement | Teams making agent changes reviewable before merge |
+| [`schemas/aac-card.schema.json`](schemas/aac-card.schema.json) | Minimal workflow/node/agent/tool card schema | Tooling and CI validators |
 | [`scripts/aac_gate.py`](scripts/aac_gate.py) | Dependency-free GitHub Actions validator for AAC cards and cross-references | Repos that want AAC as a required PR check |
 | [`docs/turn-any-process-into-a-workflow.png`](docs/turn-any-process-into-a-workflow.png) | One-page visual explainer: manual chaos vs automated workflow | Execs, clients, prospects |
 | [`docs/how-the-workflow-is-built.png`](docs/how-the-workflow-is-built.png) | Deeper visual: 12 primitives, 4 runtimes, 5 disciplines, reference flow | Builders, technical reviewers |
@@ -88,7 +88,7 @@ The five disciplines apply twice:
 
 Effective permission is always the most restrictive intersection of workflow max lane, node max lane, agent envelope, tool permission, user approval, and runtime gate result. An agent never upgrades itself from draft to send.
 
-See [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) for the canonical AAC 2.0 operating package.
+See [`docs/AAC-v2.1.md`](docs/AAC-v2.1.md) for the canonical AAC 2.1 operating package.
 
 ---
 
@@ -108,11 +108,11 @@ The framework has been pressure-tested against two structurally different real w
 
 ---
 
-## Read AAC 2.0 first
+## Read AAC 2.1 first
 
-[`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) is now the canonical operating package. The v1.1 PDF remains the locked core rubric reference: 34 pages, 8 parts, 4 appendices, and the 57-item readiness checklist.
+[`docs/AAC-v2.1.md`](docs/AAC-v2.1.md) is now the canonical operating package. [`docs/AAC-v2.0.md`](docs/AAC-v2.0.md) remains the prior creation-gate release. The v1.1 PDF remains the locked core rubric reference: 34 pages, 8 parts, 4 appendices, and the 57-item readiness checklist.
 
-[📄 Read AAC v2.0](docs/AAC-v2.0.md)
+[📄 Read AAC v2.1](docs/AAC-v2.1.md)
 
 [📄 Download AAC v1.1 core rubric reference (PDF)](docs/AAC-v1.1.pdf)
 

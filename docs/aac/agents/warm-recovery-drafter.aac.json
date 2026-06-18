@@ -1,6 +1,6 @@
 {
   "card_type": "agent",
-  "aac_card_version": "2.0",
+  "aac_card_version": "2.1",
   "agent_id": "warm-recovery-drafter",
   "purpose": "Create draft-only warm recovery review packets for human approval without sending messages or mutating CRM state.",
   "allowed_workflows": [
@@ -15,12 +15,16 @@
     {
       "name": "approved_source_reader",
       "scope": "read approved source snapshots",
-      "write": false
+      "write": false,
+      "tool_id": "approved-source-reader",
+      "proof_status": "sandbox_proven"
     },
     {
       "name": "review_packet_writer",
       "scope": "write private review packet only",
-      "write": true
+      "write": true,
+      "tool_id": "review-packet-writer",
+      "proof_status": "sandbox_proven"
     }
   ],
   "allowed_action_classes": [
@@ -86,5 +90,61 @@
       "memory_write_policy": "proposal_only",
       "approval_owner": "Bre or named ops owner"
     }
+  },
+  "tool_pool_contract": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-drafter",
+    "runtime_mode": "agent-envelope",
+    "max_lane": "draft",
+    "allowed_tools": [
+      {
+        "tool_id": "approved-source-reader",
+        "why_needed": "read approved source snapshots",
+        "allowed_operations": [
+          "read_snapshot"
+        ],
+        "forbidden_operations": [
+          "write",
+          "send",
+          "mutate_crm"
+        ],
+        "max_lane": "read",
+        "proof_required": true,
+        "proof_status": "sandbox_proven"
+      },
+      {
+        "tool_id": "review-packet-writer",
+        "why_needed": "write private draft packet only",
+        "allowed_operations": [
+          "write_private_review_packet"
+        ],
+        "forbidden_operations": [
+          "send",
+          "write_crm",
+          "sequence_enrollment"
+        ],
+        "max_lane": "draft",
+        "proof_required": true,
+        "proof_status": "sandbox_proven"
+      }
+    ],
+    "forbidden_tools": [],
+    "forbidden_tools_by_default": true,
+    "minimum_tool_pool": [
+      "approved-source-reader",
+      "review-packet-writer"
+    ],
+    "tool_pruning_rationale": "Only the reviewed tools needed for this node are present; every added tool requires a Tool Card, proof run, and approval.",
+    "approval_required_for_tool_changes": true
+  },
+  "tool_reality_gate": {
+    "schema_version": "2.1",
+    "node_id": "warm-recovery-drafter",
+    "status": "pass_tool_proven",
+    "proof_status": "sandbox_proven",
+    "fable_tool_proof_run_ref": "docs/aac/tool-proof-runs/warm-recovery-drafter/",
+    "last_verified": "2026-06-17",
+    "blocks_live_lane_until": null,
+    "tool_change_rule": "detect and propose; never silently rewrite durable instructions, memory, tool pool, reach, or external-action behavior"
   }
 }

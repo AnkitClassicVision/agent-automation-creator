@@ -2,6 +2,21 @@
 
 ## AAC Framework
 
+### [2.1] — 2026-06-17
+
+Operating-package minor release. Adds Tool Reality + Harness Maintenance while keeping the AAC v1.1 core rubric unchanged.
+
+**Added**
+- Canonical `docs/AAC-v2.1.md` operating package patch.
+- `aac_sync_contract` to pin AAC v2.1, AAC Factory v0.3.0, and the shared capability set.
+- Tool Cards under `docs/aac/tools/` with side-effect profile, permission tier, proof status, audit path, and rollback/reversal.
+- Tool Pool Contracts and Tool Reality Gates on node and agent cards.
+- Workflow Maintenance Contract: trigger-based, pruning-first, proposal/replay/approval loop; silent self-update explicitly forbidden.
+- `scripts/aac_gate.py` now validates tool artifacts and cross-references.
+
+**Unchanged**
+- AAC v1.1 core rubric, D/C/A/H runtime modes, five disciplines, and refusal-first architecture.
+
 ### [2.0] — 2026-06-05
 
 Major release. AAC moves from a static readiness framework into a creation-time operating package for agentic workflows. The v1.1 core rubric remains intact, but creation/promotion/merge/scheduling now require a portable AAC packet and executable gates.
