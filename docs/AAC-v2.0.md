@@ -35,6 +35,18 @@ Core sentence:
 
 > A node is the work. An agent is the performer. A workflow is the box. A run card is the proof.
 
+## Loop architecture
+
+AAC creation and promotion sit inside a parent loop architecture:
+
+> A loop is a bounded improvement system with an objective function, gates, proof, promotion rules,
+> and human-over-loop residue ownership. AAC Factory is one intervention-builder inside that loop.
+
+See [`docs/aac/loop-architecture.md`](aac/loop-architecture.md) for the canonical map: Parent
+System → Loop → Objective Function → Gate/Router → TBR Gate → Boundary Maps → AAC Factory
+intervention → Run Card → Champion-Challenger + Holdout → Improvement Ledger → Readiness Ladder →
+Human-over-loop.
+
 ## Mandatory workflow box declaration
 
 Before creating, auditing, promoting, scheduling, or certifying an agentic workflow, declare the box being judged.

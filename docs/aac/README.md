@@ -10,6 +10,10 @@ The card model follows canonical [`docs/AAC-v2.0.md`](../AAC-v2.0.md):
 - run-card schema = runtime proof contract
 - agent registry = accountable inventory of agent envelopes
 
+The loop model follows [`loop-architecture.md`](loop-architecture.md): a loop is the bounded
+improvement system, a gate/router chooses repeat/repair/escalate/exit/promote, and AAC Factory is
+one intervention-builder inside larger business/life loops.
+
 Run the gate locally:
 
 ```bash
